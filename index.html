@@ -14,96 +14,156 @@
       margin: 0;
       font-family: Arial, sans-serif;
       background: #eef2f7;
-      color: #1c1c1c;
+      color: #1b1b1b;
     }
 
     header {
       background: linear-gradient(135deg, #0b3d91, #1769aa);
       color: white;
-      padding: 35px 20px;
+      padding: 30px 20px;
       text-align: center;
     }
 
     header h1 {
-      margin: 0 0 10px;
-      font-size: 36px;
+      margin: 0 0 8px;
+      font-size: 34px;
     }
 
     header p {
       margin: 0;
-      font-size: 18px;
+      font-size: 17px;
       opacity: 0.9;
     }
 
     .container {
-      width: 90%;
-      max-width: 1000px;
-      margin: 30px auto;
+      width: 92%;
+      max-width: 1100px;
+      margin: 25px auto;
     }
 
-    .status-bar {
+    .top-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.5fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .panel {
       background: white;
       border-radius: 14px;
-      padding: 18px 22px;
-      margin-bottom: 20px;
+      padding: 20px;
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
     }
 
-    .status-bar h2 {
-      margin: 0 0 8px;
-      font-size: 22px;
+    .panel h2 {
+      margin-top: 0;
+      margin-bottom: 12px;
     }
 
     .status {
-      margin: 0;
-      color: #2f7d32;
       font-weight: bold;
+      color: #2e7d32;
     }
 
-    .alerts {
-      display: grid;
-      gap: 20px;
+    .map {
+      height: 300px;
+      border-radius: 12px;
+      background:
+        linear-gradient(rgba(255,255,255,0.55), rgba(255,255,255,0.55)),
+        repeating-linear-gradient(
+          0deg,
+          #dfe7ef 0px,
+          #dfe7ef 1px,
+          transparent 1px,
+          transparent 40px
+        ),
+        repeating-linear-gradient(
+          90deg,
+          #dfe7ef 0px,
+          #dfe7ef 1px,
+          transparent 1px,
+          transparent 40px
+        );
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #666;
+      font-size: 20px;
+      text-align: center;
+      border: 1px solid #d4dbe3;
+    }
+
+    .alerts-section {
+      margin-top: 20px;
+    }
+
+    .alerts-section h2 {
+      margin-bottom: 15px;
     }
 
     .alert-card {
       background: white;
       border-radius: 14px;
-      padding: 22px;
+      margin-bottom: 15px;
+      overflow: hidden;
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-      border-left: 6px solid #888;
+      border-left: 6px solid #777;
     }
 
-    .alert-card h3 {
-      margin-top: 0;
-      font-size: 24px;
+    .alert-header {
+      padding: 18px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
     }
 
-    .alert-card p {
+    .alert-header h3 {
+      margin: 0;
+      font-size: 21px;
+    }
+
+    .badge {
+      padding: 6px 10px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: bold;
+      background: #e9ecef;
+      white-space: nowrap;
+    }
+
+    .alert-content {
+      padding: 0 20px 20px;
       line-height: 1.6;
     }
 
-    .no-alert {
-      border-left-color: #2f7d32;
-      text-align: center;
-    }
-
-    .updates-card {
-      margin-top: 20px;
-    }
-
-    .updates-button {
-      display: inline-block;
-      margin-top: 10px;
-      padding: 12px 18px;
+    .details-button {
+      border: none;
       background: #0b3d91;
       color: white;
-      text-decoration: none;
+      padding: 10px 15px;
       border-radius: 8px;
+      cursor: pointer;
       font-weight: bold;
+      margin-top: 8px;
     }
 
-    .updates-button:hover {
+    .details-button:hover {
       background: #082d6b;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .no-alerts {
+      border-left-color: #2e7d32;
+      text-align: center;
+      padding: 28px 20px;
+    }
+
+    .no-alerts h3 {
+      margin-top: 0;
     }
 
     footer {
@@ -112,6 +172,12 @@
       color: #666;
       font-size: 14px;
     }
+
+    @media (max-width: 800px) {
+      .top-grid {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 
@@ -119,34 +185,64 @@
 
   <header>
     <h1>Canada Severe Weather Alerts</h1>
-    <p>Live Canadian severe weather information</p>
+    <p>Canadian severe weather monitoring dashboard</p>
   </header>
 
   <main class="container">
 
-    <section class="status-bar">
-      <h2>Alert Status</h2>
-      <p class="status">● No severe weather alerts currently displayed</p>
-    </section>
+    <div class="top-grid">
 
-    <section class="alerts">
+      <section class="panel">
+        <h2>Current Status</h2>
+        <p class="status">● No severe weather alerts currently displayed</p>
+        <p>Alerts will appear below when available.</p>
+      </section>
 
-      <div class="alert-card no-alert">
+      <section class="panel">
+        <h2>Alert Map</h2>
+        <div class="map">
+          Interactive alert map will appear here
+        </div>
+      </section>
+
+    </div>
+
+    <section class="alerts-section">
+      <h2>Active Alerts</h2>
+
+      <div class="alert-card no-alerts">
         <h3>No Active Alerts</h3>
         <p>
-          There are currently no severe weather alerts displayed for your selected area.
+          There are currently no severe weather alerts displayed.
         </p>
       </div>
 
-      <div class="alert-card updates-card">
-        <h3>Weather Updates</h3>
-        <p>
-          Check the latest weather updates and information.
-        </p>
+      <!-- Example alert card for later -->
 
-        <a class="updates-button" href="updates.md">
-          View Latest Updates
-        </a>
+      <div class="alert-card hidden" id="exampleAlert">
+
+        <div class="alert-header">
+          <h3>Severe Thunderstorm Warning</h3>
+          <span class="badge">WARNING</span>
+        </div>
+
+        <div class="alert-content">
+          <p>
+            Severe thunderstorms are occurring in the area.
+          </p>
+
+          <button class="details-button" onclick="toggleDetails()">
+            View Details
+          </button>
+
+          <div id="details" class="hidden">
+            <p><strong>Area:</strong> Example Location</p>
+            <p><strong>Issued:</strong> August 26, 2026</p>
+            <p><strong>Hazards:</strong> Damaging winds, large hail</p>
+            <p><strong>Source:</strong> Environment and Climate Change Canada</p>
+          </div>
+        </div>
+
       </div>
 
     </section>
@@ -156,6 +252,21 @@
   <footer>
     Canada Severe Weather Alerts
   </footer>
+
+  <script>
+    function toggleDetails() {
+      const details = document.getElementById("details");
+      const button = document.querySelector(".details-button");
+
+      if (details.classList.contains("hidden")) {
+        details.classList.remove("hidden");
+        button.textContent = "Hide Details";
+      } else {
+        details.classList.add("hidden");
+        button.textContent = "View Details";
+      }
+    }
+  </script>
 
 </body>
 </html>
