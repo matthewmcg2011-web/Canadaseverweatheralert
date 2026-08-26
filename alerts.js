@@ -3,8 +3,10 @@
 // ECCC GeoMet + Leaflet
 // ============================================================
 
+console.log("NEW alerts.js is loaded");
+
 var ECCC_ALERTS_API =
-    'https://api.weather.gc.ca/collections/weather-alerts/items?f=geojson&limit=500';
+    "https://api.weather.gc.ca/collections/weather-alerts/items?f=geojson&limit=500";
 
 var map = null;
 
@@ -13,226 +15,228 @@ var watchLayer = null;
 var advisoryLayer = null;
 var otherLayer = null;
 
-var allFeatures = [];
-
 
 // ============================================================
 // INITIALIZE MAP
 // ============================================================
 
 function initMap() {
-    var mapElement = document.getElementById('map');
+
+    var mapElement =
+        document.getElementById("map");
 
     if (!mapElement) {
-        console.error('Map element not found.');
+        console.error("Map element #map was not found.");
         return;
     }
 
-    if (typeof L === 'undefined') {
-        console.error('Leaflet is not loaded.');
+    if (typeof L === "undefined") {
+        console.error("Leaflet is not loaded.");
         return;
     }
 
-    map = L.map('map').setView(
+    map = L.map("map").setView(
         [56.1304, -106.3468],
         4
     );
 
     L.tileLayer(
-        'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
         {
             maxZoom: 19,
             attribution:
-                '&copy; OpenStreetMap contributors'
+                "&copy; OpenStreetMap contributors"
         }
     ).addTo(map);
 
 
-    // Separate layers for filtering
-    warningLayer = L.layerGroup().addTo(map);
-    watchLayer = L.layerGroup().addTo(map);
-    advisoryLayer = L.layerGroup().addTo(map);
-    otherLayer = L.layerGroup().addTo(map);
+    warningLayer =
+        L.layerGroup().addTo(map);
 
-    // Create toggle controls
+    watchLayer =
+        L.layerGroup().addTo(map);
+
+    advisoryLayer =
+        L.layerGroup().addTo(map);
+
+    otherLayer =
+        L.layerGroup().addTo(map);
+
+
     createMapControls();
+
+
+    setTimeout(function () {
+        map.invalidateSize();
+    }, 500);
 }
 
 
 // ============================================================
-// MAP TOGGLE CONTROLS
+// MAP CONTROLS
 // ============================================================
 
 function createMapControls() {
 
-    if (!map) return;
-
     var control =
-        L.control({ position: 'topright' });
+        L.control({
+            position: "topright"
+        });
+
 
     control.onAdd = function () {
 
         var div =
             L.DomUtil.create(
-                'div',
-                'alert-map-controls'
+                "div",
+                "alert-map-controls"
             );
 
-        div.style.background = '#ffffff';
-        div.style.padding = '12px';
-        div.style.borderRadius = '8px';
+
+        div.style.background =
+            "#ffffff";
+
+        div.style.padding =
+            "12px";
+
+        div.style.borderRadius =
+            "8px";
+
         div.style.boxShadow =
-            '0 2px 8px rgba(0,0,0,0.2)';
+            "0 2px 8px rgba(0,0,0,0.25)";
+
         div.style.fontFamily =
-            'Arial, sans-serif';
-        div.style.fontSize = '14px';
+            "Arial, sans-serif";
+
 
         div.innerHTML = `
-            <strong style="display:block;margin-bottom:8px;">
+            <strong
+                style="
+                    display:block;
+                    margin-bottom:9px;
+                "
+            >
                 Alert Types
             </strong>
 
-            <label style="display:block;margin-bottom:6px;">
+            <label
+                style="
+                    display:block;
+                    margin-bottom:7px;
+                    cursor:pointer;
+                "
+            >
                 <input
-                    type="checkbox"
                     id="toggle-warnings"
+                    type="checkbox"
                     checked
                 >
-                <span style="color:#d32f2f;font-weight:bold;">
+                <span
+                    style="
+                        color:#d32f2f;
+                        font-weight:bold;
+                    "
+                >
                     Warnings
                 </span>
             </label>
 
-            <label style="display:block;margin-bottom:6px;">
+            <label
+                style="
+                    display:block;
+                    margin-bottom:7px;
+                    cursor:pointer;
+                "
+            >
                 <input
-                    type="checkbox"
                     id="toggle-watches"
+                    type="checkbox"
                     checked
                 >
-                <span style="color:#ef6c00;font-weight:bold;">
+                <span
+                    style="
+                        color:#ef6c00;
+                        font-weight:bold;
+                    "
+                >
                     Watches
                 </span>
             </label>
 
-            <label style="display:block;margin-bottom:6px;">
+            <label
+                style="
+                    display:block;
+                    margin-bottom:7px;
+                    cursor:pointer;
+                "
+            >
                 <input
-                    type="checkbox"
                     id="toggle-advisories"
+                    type="checkbox"
                     checked
                 >
-                <span style="color:#0288d1;font-weight:bold;">
+                <span
+                    style="
+                        color:#0288d1;
+                        font-weight:bold;
+                    "
+                >
                     Advisories
                 </span>
             </label>
 
-            <label style="display:block;">
+            <label
+                style="
+                    display:block;
+                    cursor:pointer;
+                "
+            >
                 <input
-                    type="checkbox"
                     id="toggle-other"
+                    type="checkbox"
                     checked
                 >
                 Other
             </label>
         `;
 
-        L.DomEvent.disableClickPropagation(div);
-        L.DomEvent.disableScrollPropagation(div);
+
+        L.DomEvent.disableClickPropagation(
+            div
+        );
+
+        L.DomEvent.disableScrollPropagation(
+            div
+        );
+
 
         return div;
     };
 
+
     control.addTo(map);
 
 
-    // Toggle events
     setTimeout(function () {
 
-        var warningToggle =
-            document.getElementById(
-                'toggle-warnings'
-            );
-
-        var watchToggle =
-            document.getElementById(
-                'toggle-watches'
-            );
-
-        var advisoryToggle =
-            document.getElementById(
-                'toggle-advisories'
-            );
-
-        var otherToggle =
-            document.getElementById(
-                'toggle-other'
-            );
-
-
-        warningToggle.addEventListener(
-            'change',
-            function () {
-
-                if (this.checked) {
-                    map.addLayer(
-                        warningLayer
-                    );
-                } else {
-                    map.removeLayer(
-                        warningLayer
-                    );
-                }
-            }
+        setupToggle(
+            "toggle-warnings",
+            warningLayer
         );
 
-
-        watchToggle.addEventListener(
-            'change',
-            function () {
-
-                if (this.checked) {
-                    map.addLayer(
-                        watchLayer
-                    );
-                } else {
-                    map.removeLayer(
-                        watchLayer
-                    );
-                }
-            }
+        setupToggle(
+            "toggle-watches",
+            watchLayer
         );
 
-
-        advisoryToggle.addEventListener(
-            'change',
-            function () {
-
-                if (this.checked) {
-                    map.addLayer(
-                        advisoryLayer
-                    );
-                } else {
-                    map.removeLayer(
-                        advisoryLayer
-                    );
-                }
-            }
+        setupToggle(
+            "toggle-advisories",
+            advisoryLayer
         );
 
-
-        otherToggle.addEventListener(
-            'change',
-            function () {
-
-                if (this.checked) {
-                    map.addLayer(
-                        otherLayer
-                    );
-                } else {
-                    map.removeLayer(
-                        otherLayer
-                    );
-                }
-            }
+        setupToggle(
+            "toggle-other",
+            otherLayer
         );
 
     }, 100);
@@ -240,83 +244,164 @@ function createMapControls() {
 
 
 // ============================================================
-// LOAD ALERTS
+// TOGGLE SETUP
+// ============================================================
+
+function setupToggle(
+    id,
+    layer
+) {
+
+    var checkbox =
+        document.getElementById(id);
+
+    if (!checkbox) {
+        return;
+    }
+
+
+    checkbox.addEventListener(
+        "change",
+        function () {
+
+            if (this.checked) {
+
+                map.addLayer(layer);
+
+            } else {
+
+                map.removeLayer(layer);
+            }
+        }
+    );
+}
+
+
+// ============================================================
+// LOAD ECCC ALERTS
 // ============================================================
 
 function loadAlerts() {
 
     var container =
-        findAlertsContainer();
+        document.getElementById(
+            "active-alerts"
+        );
+
+
+    if (!container) {
+
+        console.error(
+            "The #active-alerts element was not found."
+        );
+    }
+
 
     fetch(
         ECCC_ALERTS_API,
         {
-            cache: 'no-store'
+            cache: "no-store"
         }
     )
     .then(function (response) {
 
         if (!response.ok) {
+
             throw new Error(
-                'ECCC HTTP ' +
+                "ECCC returned HTTP " +
                 response.status
             );
         }
+
 
         return response.json();
     })
     .then(function (data) {
 
-        var features =
-            data.features || [];
+        console.log(
+            "ECCC data received:",
+            data
+        );
 
-        allFeatures =
-            removeExpiredAlerts(features);
+
+        var features =
+            Array.isArray(
+                data.features
+            )
+                ? data.features
+                : [];
+
+
+        console.log(
+            "ECCC alert count:",
+            features.length
+        );
+
+
+        var activeFeatures =
+            removeExpiredAlerts(
+                features
+            );
+
+
+        console.log(
+            "Active alert count:",
+            activeFeatures.length
+        );
+
 
         displayAlerts(
-            allFeatures,
+            activeFeatures,
             container
         );
 
+
         plotAlertsOnMap(
-            allFeatures
+            activeFeatures
         );
 
+
         updateStatus(
-            allFeatures.length
+            activeFeatures.length
         );
     })
     .catch(function (error) {
 
         console.error(
-            'ECCC alert error:',
+            "ECCC alert error:",
             error
         );
+
 
         if (container) {
 
             container.innerHTML = `
-                <div style="
-                    padding:20px;
-                    border:1px solid #ffcdd2;
-                    background:#ffebee;
-                    border-radius:8px;
-                    margin-top:10px;
-                ">
+                <div
+                    style="
+                        padding:20px;
+                        border:1px solid #ffcdd2;
+                        background:#ffebee;
+                        border-radius:8px;
+                    "
+                >
 
-                    <h3 style="
-                        margin:0 0 8px 0;
-                        color:#c62828;
-                    ">
+                    <h3
+                        style="
+                            margin:0 0 8px 0;
+                            color:#c62828;
+                        "
+                    >
                         Unable to Load Alerts
                     </h3>
 
-                    <p style="
-                        margin:0 0 12px 0;
-                        color:#b71c1c;
-                    ">
+                    <p
+                        style="
+                            margin:0 0 12px 0;
+                            color:#b71c1c;
+                        "
+                    >
                         The live ECCC weather service
-                        could not be reached right now.
+                        could not be reached.
                     </p>
 
                     <button
@@ -345,87 +430,49 @@ function loadAlerts() {
 // REMOVE EXPIRED ALERTS
 // ============================================================
 
-function removeExpiredAlerts(features) {
+function removeExpiredAlerts(
+    features
+) {
 
     var now =
         Date.now();
 
+
     return features.filter(
         function (feature) {
 
-            var props =
+            var p =
                 feature.properties || {};
 
+
             var expiry =
-                props.expiration_datetime ||
-                props.event_end_datetime ||
-                props.expires;
+                p.expiration_datetime;
+
 
             if (!expiry) {
                 return true;
             }
 
-            var expirationTime =
-                new Date(expiry).getTime();
 
-            if (isNaN(expirationTime)) {
+            var expiryTime =
+                new Date(
+                    expiry
+                ).getTime();
+
+
+            if (isNaN(expiryTime)) {
                 return true;
             }
 
-            return expirationTime > now;
+
+            return expiryTime > now;
         }
     );
 }
 
 
 // ============================================================
-// FIND ALERT CONTAINER
-// ============================================================
-
-function findAlertsContainer() {
-
-    var container =
-        document.getElementById(
-            'active-alerts'
-        );
-
-    if (container) {
-        return container;
-    }
-
-    container =
-        document.getElementById(
-            'alerts-container'
-        );
-
-    if (container) {
-        return container;
-    }
-
-    container =
-        document.getElementById(
-            'alerts-list'
-        );
-
-    if (container) {
-        return container;
-    }
-
-    container =
-        document.querySelector(
-            '.alerts-container'
-        );
-
-    if (container) {
-        return container;
-    }
-
-    return null;
-}
-
-
-// ============================================================
-// DISPLAY ALERT CARDS
+// DISPLAY ALERTS
 // ============================================================
 
 function displayAlerts(
@@ -437,34 +484,40 @@ function displayAlerts(
         return;
     }
 
+
     if (
         !features ||
         features.length === 0
     ) {
 
         container.innerHTML = `
-            <div style="
-                padding:20px;
-                background:#ffffff;
-                border:1px solid #e0e0e0;
-                border-radius:8px;
-                text-align:center;
-                color:#555;
-            ">
+            <div
+                style="
+                    padding:20px;
+                    background:#ffffff;
+                    border:1px solid #e0e0e0;
+                    border-radius:8px;
+                    text-align:center;
+                "
+            >
 
-                <h3 style="
-                    margin:0 0 6px 0;
-                    color:#2e7d32;
-                ">
+                <h3
+                    style="
+                        margin:0 0 6px 0;
+                        color:#2e7d32;
+                    "
+                >
                     No Active Alerts
                 </h3>
 
-                <p style="
-                    margin:0;
-                    font-size:0.95rem;
-                ">
+                <p
+                    style="
+                        margin:0;
+                        color:#555;
+                    "
+                >
                     There are currently no active
-                    public weather alerts issued by
+                    public weather alerts from
                     Environment and Climate Change Canada.
                 </p>
 
@@ -475,7 +528,7 @@ function displayAlerts(
     }
 
 
-    var html = '';
+    var html = "";
 
 
     for (
@@ -484,66 +537,69 @@ function displayAlerts(
         i++
     ) {
 
-        var props =
+        var p =
             features[i].properties || {};
 
 
-        var headline =
-            props.alert_name_en ||
-            props.alert_short_name_en ||
-            props.headline ||
-            props.event ||
-            props.title ||
-            'Weather Alert';
+        // ECCC official fields
+        var alertName =
+            p.alert_name_en ||
+            "Weather Alert";
 
 
-        var eventType =
-            props.alert_type ||
-            props.event ||
-            props.event_en ||
-            'Alert';
+        var shortName =
+            p.alert_short_name_en ||
+            "";
+
+
+        var alertType =
+            p.alert_type ||
+            "Alert";
 
 
         var area =
-            props.feature_name_en ||
-            props.area_name ||
-            props.area ||
-            props.location ||
-            props.name_en ||
-            '';
+            p.feature_name_en ||
+            "Canadian location";
 
 
         var description =
-            props.alert_text_en ||
-            props.description ||
-            props.summary ||
-            props.text ||
-            'No additional details available.';
+            p.alert_text_en ||
+            "No additional details available for this alert.";
 
 
-        var severity =
-            props.risk_colour_en ||
-            props.severity ||
-            'Notice';
+        var impact =
+            p.impact_en ||
+            "";
 
 
-        var timeIssued =
-            props.publication_datetime ||
-            props.issued ||
-            props.effective ||
-            props.updated ||
-            '';
+        var risk =
+            p.risk_colour_en ||
+            "";
+
+
+        var status =
+            p.status_en ||
+            "";
+
+
+        var province =
+            p.province ||
+            "";
+
+
+        var issued =
+            p.publication_datetime ||
+            "";
 
 
         var expires =
-            props.expiration_datetime ||
-            props.event_end_datetime ||
-            '';
+            p.expiration_datetime ||
+            "";
 
 
-        var badgeColor =
+        var color =
             getAlertColor(
-                props
+                p
             );
 
 
@@ -552,7 +608,7 @@ function displayAlerts(
                 class="alert-card"
                 style="
                     border:1px solid #e0e0e0;
-                    border-left:6px solid ${badgeColor};
+                    border-left:6px solid ${color};
                     border-radius:8px;
                     padding:18px;
                     margin-bottom:16px;
@@ -564,112 +620,172 @@ function displayAlerts(
                 "
             >
 
-                <div style="
-                    display:flex;
-                    justify-content:space-between;
-                    align-items:flex-start;
-                    gap:10px;
-                    margin-bottom:8px;
-                ">
+                <div
+                    style="
+                        display:flex;
+                        justify-content:space-between;
+                        align-items:flex-start;
+                        gap:12px;
+                        margin-bottom:10px;
+                    "
+                >
 
-                    <h3 style="
-                        margin:0;
-                        font-size:1.1rem;
-                        color:#111;
-                        font-weight:600;
-                    ">
-                        ${escapeHtml(
-                            headline
-                        )}
-                    </h3>
+                    <div>
 
-                    <span style="
-                        background:${badgeColor};
-                        color:#fff;
-                        font-size:0.72rem;
-                        font-weight:bold;
-                        padding:4px 8px;
-                        border-radius:4px;
-                        white-space:nowrap;
-                        text-transform:uppercase;
-                    ">
-                        ${escapeHtml(
-                            eventType
-                        )}
+                        <h3
+                            style="
+                                margin:0;
+                                font-size:1.15rem;
+                                color:#111;
+                            "
+                        >
+                            ${escapeHtml(alertName)}
+                        </h3>
+
+                        ${
+                            shortName
+                                ? `
+                                    <div
+                                        style="
+                                            margin-top:3px;
+                                            color:#666;
+                                            font-size:0.85rem;
+                                        "
+                                    >
+                                        ${escapeHtml(shortName)}
+                                    </div>
+                                  `
+                                : ""
+                        }
+
+                    </div>
+
+
+                    <span
+                        style="
+                            background:${color};
+                            color:#ffffff;
+                            padding:5px 9px;
+                            border-radius:5px;
+                            font-size:0.72rem;
+                            font-weight:bold;
+                            white-space:nowrap;
+                        "
+                    >
+                        ${escapeHtml(alertType)}
                     </span>
 
                 </div>
 
 
-                <div style="
-                    font-size:0.85rem;
-                    color:#666;
-                    margin-bottom:10px;
-                ">
+                <div
+                    style="
+                        color:#555;
+                        font-size:0.9rem;
+                        margin-bottom:12px;
+                    "
+                >
 
                     ${
                         area
-                            ? '<strong>Area:</strong> ' +
-                              escapeHtml(area)
-                            : ''
+                            ? `
+                                <strong>Area:</strong>
+                                ${escapeHtml(area)}
+                              `
+                            : ""
                     }
 
                     ${
-                        area && timeIssued
-                            ? ' &bull; '
-                            : ''
-                    }
-
-                    ${
-                        timeIssued
-                            ? '<strong>Issued:</strong> ' +
-                              escapeHtml(
-                                  formatDate(
-                                      timeIssued
-                                  )
-                              )
-                            : ''
+                        province
+                            ? `
+                                ${
+                                    area
+                                        ? " &bull; "
+                                        : ""
+                                }
+                                <strong>Province:</strong>
+                                ${escapeHtml(province)}
+                              `
+                            : ""
                     }
 
                 </div>
 
 
-                <div style="
-                    font-size:0.92rem;
-                    color:#333;
-                    line-height:1.5;
-                    white-space:pre-line;
-                ">
-                    ${escapeHtml(
-                        description
-                    )}
+                <div
+                    style="
+                        color:#222;
+                        font-size:0.95rem;
+                        line-height:1.6;
+                        white-space:pre-line;
+                    "
+                >
+                    ${escapeHtml(description)}
                 </div>
 
 
-                <div style="
-                    margin-top:12px;
-                    font-size:0.85rem;
-                    color:#666;
-                ">
+                <div
+                    style="
+                        margin-top:14px;
+                        padding-top:12px;
+                        border-top:1px solid #eeeeee;
+                        color:#666;
+                        font-size:0.85rem;
+                        line-height:1.6;
+                    "
+                >
+
+                    ${
+                        risk
+                            ? `
+                                <strong>Risk:</strong>
+                                ${escapeHtml(risk)}
+                                <br>
+                              `
+                            : ""
+                    }
+
+                    ${
+                        status
+                            ? `
+                                <strong>Status:</strong>
+                                ${escapeHtml(status)}
+                                <br>
+                              `
+                            : ""
+                    }
+
+                    ${
+                        impact
+                            ? `
+                                <strong>Impact:</strong>
+                                ${escapeHtml(impact)}
+                                <br>
+                              `
+                            : ""
+                    }
+
+                    ${
+                        issued
+                            ? `
+                                <strong>Issued:</strong>
+                                ${escapeHtml(
+                                    formatDate(issued)
+                                )}
+                                <br>
+                              `
+                            : ""
+                    }
 
                     ${
                         expires
-                            ? '<strong>Expires:</strong> ' +
-                              escapeHtml(
-                                  formatDate(
-                                      expires
-                                  )
-                              )
-                            : ''
-                    }
-
-                    ${
-                        severity
-                            ? '<br><strong>Risk:</strong> ' +
-                              escapeHtml(
-                                  severity
-                              )
-                            : ''
+                            ? `
+                                <strong>Expires:</strong>
+                                ${escapeHtml(
+                                    formatDate(expires)
+                                )}
+                              `
+                            : ""
                     }
 
                 </div>
@@ -716,103 +832,161 @@ function plotAlertsOnMap(
         var feature =
             features[i];
 
-        var props =
+
+        var properties =
             feature.properties || {};
 
 
         var category =
             getAlertCategory(
-                props
+                properties
             );
 
 
-        var layer =
+        var color =
+            getAlertColor(
+                properties
+            );
+
+
+        var alertLayer =
             L.geoJSON(
                 feature,
                 {
                     style:
                         function () {
 
-                            var color =
-                                getAlertColor(
-                                    props
-                                );
-
                             return {
                                 color: color,
                                 weight: 2,
-                                opacity: 0.9,
+                                opacity: 0.95,
                                 fillColor: color,
-                                fillOpacity: 0.3
+                                fillOpacity: 0.30
                             };
                         },
+
 
                     onEachFeature:
                         function (
                             feature,
-                            featureLayer
+                            layer
                         ) {
 
                             var p =
                                 feature.properties ||
                                 {};
 
+
                             var title =
                                 p.alert_name_en ||
-                                p.alert_short_name_en ||
-                                p.headline ||
-                                p.event ||
-                                'Weather Alert';
+                                "Weather Alert";
 
 
                             var area =
                                 p.feature_name_en ||
-                                p.area_name ||
-                                p.area ||
-                                p.location ||
-                                '';
+                                "";
+
+
+                            var alertType =
+                                p.alert_type ||
+                                "";
+
+
+                            var description =
+                                p.alert_text_en ||
+                                "";
 
 
                             var expires =
                                 p.expiration_datetime ||
-                                p.event_end_datetime ||
-                                '';
+                                "";
 
 
-                            featureLayer.bindPopup(`
-                                <div style="
-                                    min-width:220px;
-                                ">
+                            layer.bindPopup(`
+                                <div
+                                    style="
+                                        min-width:240px;
+                                        max-width:320px;
+                                    "
+                                >
 
-                                    <strong>
-                                        ${escapeHtml(
-                                            title
-                                        )}
-                                    </strong>
+                                    <h3
+                                        style="
+                                            margin:0 0 8px 0;
+                                        "
+                                    >
+                                        ${escapeHtml(title)}
+                                    </h3>
+
+
+                                    ${
+                                        alertType
+                                            ? `
+                                                <strong>
+                                                    Type:
+                                                </strong>
+                                                ${escapeHtml(
+                                                    alertType
+                                                )}
+                                                <br>
+                                              `
+                                            : ""
+                                    }
+
 
                                     ${
                                         area
-                                            ? '<br><br><strong>Area:</strong> ' +
-                                              escapeHtml(
-                                                  area
-                                              )
-                                            : ''
+                                            ? `
+                                                <strong>
+                                                    Area:
+                                                </strong>
+                                                ${escapeHtml(
+                                                    area
+                                                )}
+                                                <br>
+                                              `
+                                            : ""
                                     }
+
 
                                     ${
                                         expires
-                                            ? '<br><strong>Expires:</strong> ' +
-                                              escapeHtml(
-                                                  formatDate(
-                                                      expires
-                                                  )
-                                              )
-                                            : ''
+                                            ? `
+                                                <strong>
+                                                    Expires:
+                                                </strong>
+                                                ${escapeHtml(
+                                                    formatDate(
+                                                        expires
+                                                    )
+                                                )}
+                                                <br>
+                                              `
+                                            : ""
+                                    }
+
+
+                                    ${
+                                        description
+                                            ? `
+                                                <hr>
+                                                <div
+                                                    style="
+                                                        line-height:1.45;
+                                                        max-height:180px;
+                                                        overflow:auto;
+                                                    "
+                                                >
+                                                    ${escapeHtml(
+                                                        description
+                                                    )}
+                                                </div>
+                                              `
+                                            : ""
                                     }
 
                                 </div>
                             `);
-
                         }
                 }
             );
@@ -820,34 +994,34 @@ function plotAlertsOnMap(
 
         if (
             category ===
-            'warning'
+            "warning"
         ) {
 
-            layer.addTo(
+            alertLayer.addTo(
                 warningLayer
             );
 
         } else if (
             category ===
-            'watch'
+            "watch"
         ) {
 
-            layer.addTo(
+            alertLayer.addTo(
                 watchLayer
             );
 
         } else if (
             category ===
-            'advisory'
+            "advisory"
         ) {
 
-            layer.addTo(
+            alertLayer.addTo(
                 advisoryLayer
             );
 
         } else {
 
-            layer.addTo(
+            alertLayer.addTo(
                 otherLayer
             );
         }
@@ -856,7 +1030,8 @@ function plotAlertsOnMap(
         try {
 
             var layerBounds =
-                layer.getBounds();
+                alertLayer.getBounds();
+
 
             if (
                 layerBounds &&
@@ -869,15 +1044,15 @@ function plotAlertsOnMap(
             }
 
         } catch (e) {
+
             console.warn(
-                'Unable to calculate alert bounds.',
+                "Could not calculate alert bounds.",
                 e
             );
         }
     }
 
 
-    // Zoom to active alert areas
     if (
         bounds.isValid()
     ) {
@@ -902,77 +1077,54 @@ function plotAlertsOnMap(
     }
 
 
-    setTimeout(
-        function () {
-            map.invalidateSize();
-        },
-        300
-    );
+    setTimeout(function () {
+        map.invalidateSize();
+    }, 300);
 }
 
 
 // ============================================================
-// DETERMINE ALERT CATEGORY
+// ALERT CATEGORY
 // ============================================================
 
 function getAlertCategory(
     props
 ) {
 
-    var text = (
+    var type =
         String(
-            props.alert_type || ''
-        ) +
-        ' ' +
-        String(
-            props.alert_name_en || ''
-        ) +
-        ' ' +
-        String(
-            props.alert_short_name_en || ''
-        ) +
-        ' ' +
-        String(
-            props.event || ''
-        ) +
-        ' ' +
-        String(
-            props.headline || ''
-        )
-    ).toLowerCase();
+            props.alert_type ||
+            ""
+        ).toLowerCase();
 
 
     if (
-        text.indexOf(
-            'warning'
-        ) !== -1
+        type ===
+        "warning"
     ) {
-        return 'warning';
+        return "warning";
     }
 
 
     if (
-        text.indexOf(
-            'watch'
-        ) !== -1
+        type ===
+        "watch"
     ) {
-        return 'watch';
+        return "watch";
     }
 
 
     if (
-        text.indexOf(
-            'advisory'
-        ) !== -1 ||
-        text.indexOf(
-            'statement'
-        ) !== -1
+        type ===
+        "advisory" ||
+        type ===
+        "statement"
     ) {
-        return 'advisory';
+        return "advisory";
     }
 
 
-    return 'other';
+    return "other";
 }
 
 
@@ -992,29 +1144,29 @@ function getAlertColor(
 
     if (
         category ===
-        'warning'
+        "warning"
     ) {
-        return '#d32f2f';
+        return "#d32f2f";
     }
 
 
     if (
         category ===
-        'watch'
+        "watch"
     ) {
-        return '#ef6c00';
+        return "#ef6c00";
     }
 
 
     if (
         category ===
-        'advisory'
+        "advisory"
     ) {
-        return '#0288d1';
+        return "#0288d1";
     }
 
 
-    return '#757575';
+    return "#757575";
 }
 
 
@@ -1026,39 +1178,39 @@ function updateStatus(
     count
 ) {
 
-    var statusElement =
+    var status =
         document.querySelector(
-            '.status'
+            ".status"
         );
 
 
-    if (!statusElement) {
+    if (!status) {
         return;
     }
 
 
     if (count === 0) {
 
-        statusElement.textContent =
-            '● No active weather alerts';
+        status.textContent =
+            "● No active weather alerts";
 
-        statusElement.style.color =
-            '#2e7d32';
+        status.style.color =
+            "#2e7d32";
 
     } else {
 
-        statusElement.textContent =
-            '● ' +
+        status.textContent =
+            "● " +
             count +
-            ' active weather alert' +
+            " active weather alert" +
             (
                 count === 1
-                    ? ''
-                    : 's'
+                    ? ""
+                    : "s"
             );
 
-        statusElement.style.color =
-            '#b3261e';
+        status.style.color =
+            "#b3261e";
     }
 }
 
@@ -1068,40 +1220,38 @@ function updateStatus(
 // ============================================================
 
 function formatDate(
-    dateStr
+    value
 ) {
 
-    try {
-
-        var d =
-            new Date(
-                dateStr
-            );
+    if (!value) {
+        return "";
+    }
 
 
-        if (
-            isNaN(
-                d.getTime()
-            )
-        ) {
-            return dateStr;
-        }
-
-
-        return d.toLocaleString(
-            'en-CA',
-            {
-                dateStyle:
-                    'medium',
-                timeStyle:
-                    'short'
-            }
+    var date =
+        new Date(
+            value
         );
 
-    } catch (e) {
 
-        return dateStr;
+    if (
+        isNaN(
+            date.getTime()
+        )
+    ) {
+        return value;
     }
+
+
+    return date.toLocaleString(
+        "en-CA",
+        {
+            dateStyle:
+                "medium",
+            timeStyle:
+                "short"
+        }
+    );
 }
 
 
@@ -1110,47 +1260,47 @@ function formatDate(
 // ============================================================
 
 function escapeHtml(
-    str
+    value
 ) {
 
     if (
-        str === null ||
-        str === undefined
+        value === null ||
+        value === undefined
     ) {
-        return '';
+        return "";
     }
 
 
-    return String(str)
+    return String(value)
         .replace(
             /&/g,
-            '&amp;'
+            "&amp;"
         )
         .replace(
             /</g,
-            '&lt;'
+            "&lt;"
         )
         .replace(
             />/g,
-            '&gt;'
+            "&gt;"
         )
         .replace(
             /"/g,
-            '&quot;'
+            "&quot;"
         )
         .replace(
             /'/g,
-            '&#039;'
+            "&#039;"
         );
 }
 
 
 // ============================================================
-// START APPLICATION
+// START
 // ============================================================
 
 document.addEventListener(
-    'DOMContentLoaded',
+    "DOMContentLoaded",
     function () {
 
         initMap();
@@ -1158,8 +1308,7 @@ document.addEventListener(
         loadAlerts();
 
 
-        // Refresh live data
-        // every 5 minutes.
+        // Refresh every 5 minutes
         setInterval(
             loadAlerts,
             5 * 60 * 1000
