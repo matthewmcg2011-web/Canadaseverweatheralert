@@ -1,17 +1,15 @@
-// alerts.js - ECCC Live Weather Alerts Fetcher & Leaflet Renderer
+// ECCC Weather Alerts Endpoint
+var ECCC_ALERTS_API = 'https://api.weather.gc.ca/collections/weather-alerts/items?f=json&limit=500';
 
-// ECCC GeoMet OGC API endpoint for active weather alerts
-const ECCC_ALERTS_API = 'https://api.weather.gc.ca/collections/weather-alerts/items?f=json&limit=500';
+var map = null;
+var alertsGeoJsonLayer = null;
 
-let map;
-let alertsGeoJsonLayer;
-
-// Initialize the Leaflet Map
+// Initialize Leaflet Map
 function initMap() {
-    const mapElement = document.getElementById('map');
+    var mapElement = document.getElementById('map');
     if (!mapElement) return;
 
-    // Center map over Canada
+    // Center over Canada
     map = L.map('map').setView([56.1304, -106.3468], 4);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -20,65 +18,61 @@ function initMap() {
     }).addTo(map);
 }
 
-// Fetch active alerts from ECCC API
-async function loadAlerts() {
-    const alertsContainer = document.getElementById('active-alerts') || document.querySelector('.alerts-container');
+// Fetch Active Alerts from ECCC API
+function loadAlerts() {
+    var container = document.getElementById('active-alerts') || document.querySelector('.alerts-container');
 
-    try {
-        const response = await fetch(ECCC_ALERTS_API);
-
-        if (!response.ok) {
-            throw new Error(`ECCC HTTP ${response.status}`);
-        }
-
-        const data = await response.json();
-        const features = data.features || [];
-
-        displayAlerts(features, alertsContainer);
-        plotAlertsOnMap(data);
-
-    } catch (error) {
-        console.error('ECCC alert error:', error);
-        
-        if (alertsContainer) {
-            alertsContainer.innerHTML = `
-                <div class="alert-card error">
-                    <h3>Unable to load alerts</h3>
-                    <p>The live ECCC alert service could not be reached right now.</p>
-                    <button class="btn btn-primary" onclick="loadAlerts()">Try Again</button>
-                </div>
-            `;
-        }
-    }
+    fetch(ECCC_ALERTS_API)
+        .then(function(response) {
+            if (!response.ok) {
+                throw new Error('ECCC HTTP ' + response.status);
+            }
+            return response.json();
+        })
+        .then(function(data) {
+            var features = data.features || [];
+            displayAlerts(features, container);
+            plotAlertsOnMap(data);
+        })
+        .catch(function(error) {
+            console.error('ECCC alert error:', error);
+            if (container) {
+                container.innerHTML = 
+                    '<div class="alert-card error">' +
+                        '<h3>Unable to load alerts</h3>' +
+                        '<p>The live ECCC alert service could not be reached right now.</p>' +
+                        '<button class="btn btn-primary" onclick="loadAlerts()">Try Again</button>' +
+                    '</div>';
+            }
+        });
 }
 
-// Display alert details in the UI list
+// Display Alerts in UI List
 function displayAlerts(features, container) {
     if (!container) return;
 
-    if (features.length === 0) {
+    if (!features || features.length === 0) {
         container.innerHTML = '<p>No active weather alerts across Canada at this time.</p>';
         return;
     }
 
-    const html = features.map(feature => {
-        const props = feature.properties || {};
-        const title = props.headline || props.event || 'Weather Alert';
-        const description = props.description || props.summary || 'No detailed description available.';
-        const severity = props.severity || 'Info';
+    var html = '';
+    for (var i = 0; i < features.length; i++) {
+        var props = features[i].properties || {};
+        var title = props.headline || props.event || 'Weather Alert';
+        var description = props.description || props.summary || 'No detailed description available.';
+        var severity = props.severity || 'Info';
 
-        return `
-            <div class="alert-card alert-severity-${severity.toLowerCase()}">
-                <h4>${escapeHtml(title)}</h4>
-                <p>${escapeHtml(description)}</p>
-            </div>
-        `;
-    }).join('');
+        html += '<div class="alert-card alert-severity-' + severity.toLowerCase() + '">';
+        html += '<h4>' + escapeHtml(title) + '</h4>';
+        html += '<p>' + escapeHtml(description) + '</p>';
+        html += '</div>';
+    }
 
     container.innerHTML = html;
 }
 
-// Render GeoJSON alert polygons on the Leaflet map
+// Render GeoJSON Polygons on Map
 function plotAlertsOnMap(geoJsonData) {
     if (!map) return;
 
@@ -87,7 +81,7 @@ function plotAlertsOnMap(geoJsonData) {
     }
 
     alertsGeoJsonLayer = L.geoJSON(geoJsonData, {
-        style: function () {
+        style: function() {
             return {
                 color: '#d32f2f',
                 weight: 2,
@@ -96,15 +90,15 @@ function plotAlertsOnMap(geoJsonData) {
                 fillOpacity: 0.35
             };
         },
-        onEachFeature: function (feature, layer) {
+        onEachFeature: function(feature, layer) {
             if (feature.properties && feature.properties.headline) {
-                layer.bindPopup(`<strong>${escapeHtml(feature.properties.headline)}</strong>`);
+                layer.bindPopup('<strong>' + escapeHtml(feature.properties.headline) + '</strong>');
             }
         }
     }).addTo(map);
 }
 
-// Utility function to prevent XSS
+// Escape HTML utility
 function escapeHtml(str) {
     if (!str) return '';
     return String(str)
@@ -114,8 +108,8 @@ function escapeHtml(str) {
         .replace(/"/g, '&quot;');
 }
 
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', () => {
+// Start on DOM Ready
+document.addEventListener('DOMContentLoaded', function() {
     initMap();
     loadAlerts();
 });
