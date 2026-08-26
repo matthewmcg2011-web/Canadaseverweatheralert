@@ -1,273 +1,94 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canada Severe Weather Alerts</title>
 
-  <title>Canada Severe Weather Alerts</title>
+    <!-- Leaflet Map CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 
-  <!-- Leaflet CSS -->
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-  >
+    <!-- Your stylesheet -->
+    <link rel="stylesheet" href="stlyale.css">
 
-  <style>
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #eef2f7;
-      color: #1b1b1b;
-    }
-
-    header {
-      background: linear-gradient(135deg, #0b3d91, #1769aa);
-      color: white;
-      padding: 30px 20px;
-      text-align: center;
-    }
-
-    header h1 {
-      margin: 0 0 8px;
-      font-size: 34px;
-    }
-
-    header p {
-      margin: 0;
-      font-size: 17px;
-      opacity: 0.9;
-    }
-
-    .container {
-      width: 92%;
-      max-width: 1150px;
-      margin: 25px auto;
-    }
-
-    .panel {
-      background: white;
-      border-radius: 14px;
-      padding: 20px;
-      margin-bottom: 20px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-    }
-
-    .panel h2 {
-      margin-top: 0;
-    }
-
-    .status {
-      font-weight: bold;
-      color: #2e7d32;
-    }
-
-    /* IMPORTANT: visible Leaflet map area */
-    #map {
-      width: 100%;
-      height: 500px;
-      min-height: 500px;
-      border-radius: 12px;
-      overflow: hidden;
-      background: #dfe7ef;
-      border: 1px solid #d0d7de;
-    }
-
-    .alerts-section h2 {
-      margin-bottom: 15px;
-    }
-
-    .alerts {
-      display: grid;
-      gap: 15px;
-    }
-
-    .alert-card {
-      background: white;
-      border-radius: 14px;
-      overflow: hidden;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-      border-left: 6px solid #777;
-    }
-
-    .alert-header {
-      padding: 18px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 15px;
-    }
-
-    .alert-header h3 {
-      margin: 0 0 5px;
-      font-size: 21px;
-    }
-
-    .badge {
-      padding: 6px 10px;
-      border-radius: 20px;
-      font-size: 13px;
-      font-weight: bold;
-      background: #e9ecef;
-      white-space: nowrap;
-    }
-
-    .alert-content {
-      padding: 0 20px 20px;
-      line-height: 1.6;
-    }
-
-    .details-button {
-      border: none;
-      background: #0b3d91;
-      color: white;
-      padding: 10px 15px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-
-    .details-button:hover {
-      background: #082d6b;
-    }
-
-    .hidden {
-      display: none;
-    }
-
-    .no-alerts {
-      border-left-color: #2e7d32;
-      text-align: center;
-      padding: 28px 20px;
-    }
-
-    .warning-alert {
-      border-left-color: #d32f2f;
-    }
-
-    .watch-alert {
-      border-left-color: #f9a825;
-    }
-
-    .advisory-alert {
-      border-left-color: #1976d2;
-    }
-
-    .statement-alert {
-      border-left-color: #757575;
-    }
-
-    footer {
-      text-align: center;
-      padding: 25px;
-      color: #666;
-      font-size: 14px;
-    }
-
-    @media (max-width: 800px) {
-      #map {
-        height: 400px;
-        min-height: 400px;
-      }
-
-      header h1 {
-        font-size: 28px;
-      }
-    }
-  </style>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f6f9;
+            color: #333;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+        }
+        #map {
+            height: 480px;
+            width: 100%;
+            border-radius: 8px;
+            background: #e5e3df;
+        }
+        .header-title {
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+        }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 0;
+            margin-bottom: 16px;
+        }
+        .live-badge {
+            background: #e0e0e0;
+            color: #333;
+            font-size: 0.75rem;
+            font-weight: bold;
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+    </style>
 </head>
-
 <body>
 
-  <header>
-    <h1>Canada Severe Weather Alerts</h1>
-    <p>Live Canadian severe weather monitoring</p>
-  </header>
+    <div class="container">
+        <h1 class="header-title">Canada Severe Weather Alerts</h1>
 
-  <main class="container">
+        <!-- Map Card -->
+        <section class="card">
+            <h2>Live Alert Map</h2>
+            <div id="map"></div>
+        </section>
 
-    <section class="panel">
-      <h2>Current Status</h2>
-
-      <p class="status">
-        ● Connecting to live alerts...
-      </p>
-
-      <p>
-        Live weather alert information from
-        Environment and Climate Change Canada.
-      </p>
-    </section>
-
-
-    <section class="panel">
-      <h2>Live Alert Map</h2>
-
-      <div
-        id="map"
-        style="
-          width: 100%;
-          height: 500px;
-          min-height: 500px;
-        "
-      ></div>
-    </section>
-
-
-    <section class="alerts-section">
-
-      <h2>Active Alerts</h2>
-
-      <div class="alerts">
-
-        <div class="alert-card">
-
-          <div class="alert-header">
-
-            <div>
-              <h3>Loading Canadian alerts...</h3>
+        <!-- Text Alerts Card -->
+        <section class="card">
+            <div class="section-header">
+                <h2 style="margin: 0;">Active Alerts</h2>
+                <span class="live-badge">LIVE</span>
             </div>
+            <div id="active-alerts">
+                <p style="color: #666;">Connecting to Environment and Climate Change Canada...</p>
+            </div>
+        </section>
 
-            <span class="badge">
-              LIVE
-            </span>
+        <footer style="text-align: center; color: #777; font-size: 0.85rem; margin-top: 30px;">
+            Canada Severe Weather Alerts &bull; Powered by ECCC MSC GeoMet API
+        </footer>
+    </div>
 
-          </div>
-
-          <div class="alert-content">
-
-            <p>
-              Connecting to Environment and
-              Climate Change Canada...
-            </p>
-
-          </div>
-
-        </div>
-
-      </div>
-
-    </section>
-
-  </main>
-
-
-  <footer>
-    Canada Severe Weather Alerts
-  </footer>
-
-
-  <!-- Leaflet JavaScript -->
-  <script
-    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
-  </script>
-
-
-  <!-- Live ECCC alert system -->
-  <script src="alerts.js"></script>
-
+    <!-- Leaflet Map JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    <!-- Main App Script -->
+    <script src="alerts.js"></script>
 </body>
 </html>
