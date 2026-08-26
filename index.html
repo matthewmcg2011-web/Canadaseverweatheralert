@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>Canada Severe Weather Alerts</title>
 
   <style>
@@ -45,7 +46,7 @@
       display: grid;
       grid-template-columns: 1fr 1.5fr;
       gap: 20px;
-      margin-bottom: 20px;
+      margin-bottom: 25px;
     }
 
     .panel {
@@ -57,7 +58,6 @@
 
     .panel h2 {
       margin-top: 0;
-      margin-bottom: 12px;
     }
 
     .status {
@@ -93,18 +93,18 @@
       border: 1px solid #d4dbe3;
     }
 
-    .alerts-section {
-      margin-top: 20px;
-    }
-
     .alerts-section h2 {
       margin-bottom: 15px;
+    }
+
+    .alerts {
+      display: grid;
+      gap: 15px;
     }
 
     .alert-card {
       background: white;
       border-radius: 14px;
-      margin-bottom: 15px;
       overflow: hidden;
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
       border-left: 6px solid #777;
@@ -119,7 +119,7 @@
     }
 
     .alert-header h3 {
-      margin: 0;
+      margin: 0 0 5px;
       font-size: 21px;
     }
 
@@ -145,7 +145,7 @@
       border-radius: 8px;
       cursor: pointer;
       font-weight: bold;
-      margin-top: 8px;
+      margin-top: 5px;
     }
 
     .details-button:hover {
@@ -162,8 +162,20 @@
       padding: 28px 20px;
     }
 
-    .no-alerts h3 {
-      margin-top: 0;
+    .warning-alert {
+      border-left-color: #d32f2f;
+    }
+
+    .watch-alert {
+      border-left-color: #f9a825;
+    }
+
+    .advisory-alert {
+      border-left-color: #1976d2;
+    }
+
+    .statement-alert {
+      border-left-color: #757575;
     }
 
     footer {
@@ -176,6 +188,10 @@
     @media (max-width: 800px) {
       .top-grid {
         grid-template-columns: 1fr;
+      }
+
+      header h1 {
+        font-size: 28px;
       }
     }
   </style>
@@ -194,12 +210,19 @@
 
       <section class="panel">
         <h2>Current Status</h2>
-        <p class="status">● No severe weather alerts currently displayed</p>
-        <p>Alerts will appear below when available.</p>
+
+        <p class="status">
+          ● Loading Canadian alerts...
+        </p>
+
+        <p>
+          Live alert information from Environment and Climate Change Canada.
+        </p>
       </section>
 
       <section class="panel">
         <h2>Alert Map</h2>
+
         <div class="map">
           Interactive alert map will appear here
         </div>
@@ -208,38 +231,21 @@
     </div>
 
     <section class="alerts-section">
+
       <h2>Active Alerts</h2>
 
-      <div class="alert-card no-alerts">
-        <h3>No Active Alerts</h3>
-        <p>
-          There are currently no severe weather alerts displayed.
-        </p>
-      </div>
+      <div class="alerts">
 
-      <!-- Example alert card for later -->
+        <div class="alert-card">
+          <div class="alert-header">
+            <h3>Loading Canadian alerts...</h3>
+            <span class="badge">LIVE</span>
+          </div>
 
-      <div class="alert-card hidden" id="exampleAlert">
-
-        <div class="alert-header">
-          <h3>Severe Thunderstorm Warning</h3>
-          <span class="badge">WARNING</span>
-        </div>
-
-        <div class="alert-content">
-          <p>
-            Severe thunderstorms are occurring in the area.
-          </p>
-
-          <button class="details-button" onclick="toggleDetails()">
-            View Details
-          </button>
-
-          <div id="details" class="hidden">
-            <p><strong>Area:</strong> Example Location</p>
-            <p><strong>Issued:</strong> August 26, 2026</p>
-            <p><strong>Hazards:</strong> Damaging winds, large hail</p>
-            <p><strong>Source:</strong> Environment and Climate Change Canada</p>
+          <div class="alert-content">
+            <p>
+              Connecting to Environment and Climate Change Canada...
+            </p>
           </div>
         </div>
 
@@ -253,20 +259,8 @@
     Canada Severe Weather Alerts
   </footer>
 
-  <script>
-    function toggleDetails() {
-      const details = document.getElementById("details");
-      const button = document.querySelector(".details-button");
-
-      if (details.classList.contains("hidden")) {
-        details.classList.remove("hidden");
-        button.textContent = "Hide Details";
-      } else {
-        details.classList.add("hidden");
-        button.textContent = "View Details";
-      }
-    }
-  </script>
+  <!-- Live Environment and Climate Change Canada alert system -->
+  <script src="alerts.js"></script>
 
 </body>
 </html>
