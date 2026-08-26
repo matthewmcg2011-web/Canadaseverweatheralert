@@ -4,13 +4,68 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Canada Severe Weather Alerts</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #f2f2f2;
+      color: #111;
+    }
+
+    header {
+      background: #222;
+      color: white;
+      padding: 25px;
+      text-align: center;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 25px auto;
+      padding: 0 20px;
+    }
+
+    .alert-card {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    }
+
+    .no-alerts {
+      text-align: center;
+      font-size: 18px;
+      padding: 30px;
+    }
+
+    a {
+      color: #0066cc;
+    }
+  </style>
 </head>
+
 <body>
 
-  <h1>Canada Severe Weather Alerts</h1>
-  <p>Live Canadian severe weather alerts</p>
+  <header>
+    <h1>Canada Severe Weather Alerts</h1>
+    <p>Live Canadian severe weather alerts</p>
+  </header>
 
-  <a href="updates.md">View Latest Updates</a>
+  <div class="container">
+
+    <div class="alert-card no-alerts">
+      No severe weather alerts are currently displayed.
+    </div>
+
+    <div class="alert-card">
+      <h2>Weather Updates</h2>
+      <p>Check the latest weather updates here.</p>
+      <a href="updates.md">View Latest Updates</a>
+    </div>
+
+  </div>
 
 </body>
 </html>
