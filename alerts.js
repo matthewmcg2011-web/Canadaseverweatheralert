@@ -3,7 +3,7 @@
 // Environment and Climate Change Canada (ECCC)
 // ============================================================
 
-console.log("ECCC alerts.js loaded");
+console.log("ECCC alerts.js loaded - categorized alert system");
 
 
 // ============================================================
@@ -25,6 +25,13 @@ var watchLayer = null;
 var statementLayer = null;
 var advisoryLayer = null;
 var otherLayer = null;
+
+
+// ============================================================
+// FILTER STATE
+// ============================================================
+
+var activeFilters = {};
 
 
 // ============================================================
@@ -142,137 +149,94 @@ function createMapControls() {
                     Alert Types
                 </strong>
 
-
-                <label
-                    style="
-                        display:block;
-                        margin-bottom:8px;
-                        cursor:pointer;
-                    "
-                >
-
+                <label style="
+                    display:block;
+                    margin-bottom:7px;
+                    cursor:pointer;
+                ">
                     <input
-                        id="toggle-warning"
+                        id="map-toggle-warning"
                         type="checkbox"
                         checked
                     >
-
-                    <span
-                        style="
-                            color:#d32f2f;
-                            font-weight:bold;
-                        "
-                    >
+                    <span style="
+                        color:#d32f2f;
+                        font-weight:bold;
+                    ">
                         Warnings
                     </span>
-
                 </label>
 
-
-                <label
-                    style="
-                        display:block;
-                        margin-bottom:8px;
-                        cursor:pointer;
-                    "
-                >
-
+                <label style="
+                    display:block;
+                    margin-bottom:7px;
+                    cursor:pointer;
+                ">
                     <input
-                        id="toggle-watch"
+                        id="map-toggle-watch"
                         type="checkbox"
                         checked
                     >
-
-                    <span
-                        style="
-                            color:#ef6c00;
-                            font-weight:bold;
-                        "
-                    >
+                    <span style="
+                        color:#ef6c00;
+                        font-weight:bold;
+                    ">
                         Watches
                     </span>
-
                 </label>
 
-
-                <label
-                    style="
-                        display:block;
-                        margin-bottom:8px;
-                        cursor:pointer;
-                    "
-                >
-
+                <label style="
+                    display:block;
+                    margin-bottom:7px;
+                    cursor:pointer;
+                ">
                     <input
-                        id="toggle-statement"
+                        id="map-toggle-statement"
                         type="checkbox"
                         checked
                     >
-
-                    <span
-                        style="
-                            color:#1976d2;
-                            font-weight:bold;
-                        "
-                    >
+                    <span style="
+                        color:#1976d2;
+                        font-weight:bold;
+                    ">
                         Statements
                     </span>
-
                 </label>
 
-
-                <label
-                    style="
-                        display:block;
-                        margin-bottom:8px;
-                        cursor:pointer;
-                    "
-                >
-
+                <label style="
+                    display:block;
+                    margin-bottom:7px;
+                    cursor:pointer;
+                ">
                     <input
-                        id="toggle-advisory"
+                        id="map-toggle-advisory"
                         type="checkbox"
                         checked
                     >
-
-                    <span
-                        style="
-                            color:#0288d1;
-                            font-weight:bold;
-                        "
-                    >
+                    <span style="
+                        color:#0288d1;
+                        font-weight:bold;
+                    ">
                         Advisories
                     </span>
-
                 </label>
 
-
-                <label
-                    style="
-                        display:block;
-                        cursor:pointer;
-                    "
-                >
-
+                <label style="
+                    display:block;
+                    cursor:pointer;
+                ">
                     <input
-                        id="toggle-other"
+                        id="map-toggle-other"
                         type="checkbox"
                         checked
                     >
-
                     Other
-
                 </label>
             `;
 
 
-            L.DomEvent.disableClickPropagation(
-                div
-            );
-
-            L.DomEvent.disableScrollPropagation(
-                div
-            );
+            L.DomEvent.disableClickPropagation(div);
+            L.DomEvent.disableScrollPropagation(div);
 
 
             return div;
@@ -285,28 +249,28 @@ function createMapControls() {
     setTimeout(
         function () {
 
-            setupToggle(
-                "toggle-warning",
+            setupMapToggle(
+                "map-toggle-warning",
                 warningLayer
             );
 
-            setupToggle(
-                "toggle-watch",
+            setupMapToggle(
+                "map-toggle-watch",
                 watchLayer
             );
 
-            setupToggle(
-                "toggle-statement",
+            setupMapToggle(
+                "map-toggle-statement",
                 statementLayer
             );
 
-            setupToggle(
-                "toggle-advisory",
+            setupMapToggle(
+                "map-toggle-advisory",
                 advisoryLayer
             );
 
-            setupToggle(
-                "toggle-other",
+            setupMapToggle(
+                "map-toggle-other",
                 otherLayer
             );
 
@@ -317,10 +281,10 @@ function createMapControls() {
 
 
 // ============================================================
-// TOGGLE
+// MAP TOGGLE
 // ============================================================
 
-function setupToggle(
+function setupMapToggle(
     checkboxId,
     layer
 ) {
@@ -342,15 +306,11 @@ function setupToggle(
 
             if (this.checked) {
 
-                map.addLayer(
-                    layer
-                );
+                map.addLayer(layer);
 
             } else {
 
-                map.removeLayer(
-                    layer
-                );
+                map.removeLayer(layer);
             }
         }
     );
@@ -432,23 +392,11 @@ function fetchAlertType(
     .then(
         function (data) {
 
-            var features =
-                Array.isArray(
-                    data.features
-                )
-                    ? data.features
-                    : [];
-
-
-            console.log(
-                "ECCC",
-                alertType,
-                "ALERTS:",
-                features.length
-            );
-
-
-            return features;
+            return Array.isArray(
+                data.features
+            )
+                ? data.features
+                : [];
         }
     );
 }
@@ -467,27 +415,16 @@ function loadAlerts() {
 
 
     console.log(
-        "Loading ALL ECCC alert types..."
+        "Loading all ECCC alert types..."
     );
 
 
     Promise.all(
         [
-            fetchAlertType(
-                "warning"
-            ),
-
-            fetchAlertType(
-                "watch"
-            ),
-
-            fetchAlertType(
-                "statement"
-            ),
-
-            fetchAlertType(
-                "advisory"
-            )
+            fetchAlertType("warning"),
+            fetchAlertType("watch"),
+            fetchAlertType("statement"),
+            fetchAlertType("advisory")
         ]
     )
     .then(
@@ -496,22 +433,14 @@ function loadAlerts() {
             var allFeatures = [];
 
 
-            for (
-                var i = 0;
-                i < results.length;
-                i++
-            ) {
+            results.forEach(
+                function (result) {
 
-                allFeatures =
-                    allFeatures.concat(
-                        results[i]
-                    );
-            }
-
-
-            console.log(
-                "TOTAL ECCC ALERTS:",
-                allFeatures.length
+                    allFeatures =
+                        allFeatures.concat(
+                            result
+                        );
+                }
             );
 
 
@@ -530,6 +459,11 @@ function loadAlerts() {
             console.log(
                 "ACTIVE UNIQUE ALERTS:",
                 allFeatures.length
+            );
+
+
+            buildActiveAlertFilters(
+                allFeatures
             );
 
 
@@ -561,44 +495,36 @@ function loadAlerts() {
             if (container) {
 
                 container.innerHTML = `
-                    <div
-                        style="
-                            padding:20px;
-                            background:#ffebee;
-                            border:1px solid #ffcdd2;
-                            border-radius:8px;
-                        "
-                    >
+                    <div style="
+                        padding:20px;
+                        background:#ffebee;
+                        border:1px solid #ffcdd2;
+                        border-radius:8px;
+                    ">
 
-                        <h3
-                            style="
-                                margin:0 0 8px 0;
-                                color:#c62828;
-                            "
-                        >
+                        <h3 style="
+                            margin:0 0 8px 0;
+                            color:#c62828;
+                        ">
                             Unable to Load Alerts
                         </h3>
 
-                        <p
-                            style="
-                                margin:0 0 10px 0;
-                                color:#b71c1c;
-                            "
-                        >
+                        <p style="
+                            margin:0 0 10px 0;
+                            color:#b71c1c;
+                        ">
                             The ECCC alert service
                             returned an error.
                         </p>
 
-                        <pre
-                            style="
-                                white-space:pre-wrap;
-                                word-break:break-word;
-                                font-size:12px;
-                                background:#ffffff;
-                                padding:10px;
-                                border-radius:6px;
-                            "
-                        >${escapeHtml(
+                        <pre style="
+                            white-space:pre-wrap;
+                            word-break:break-word;
+                            font-size:12px;
+                            background:#ffffff;
+                            padding:10px;
+                            border-radius:6px;
+                        ">${escapeHtml(
                             error.message
                         )}</pre>
 
@@ -607,7 +533,7 @@ function loadAlerts() {
                             style="
                                 padding:9px 16px;
                                 background:#d32f2f;
-                                color:white;
+                                color:#ffffff;
                                 border:none;
                                 border-radius:6px;
                                 cursor:pointer;
@@ -621,6 +547,508 @@ function loadAlerts() {
                 `;
             }
         }
+    );
+}
+
+
+// ============================================================
+// BUILD ACTIVE ALERT FILTERS
+// ============================================================
+
+function buildActiveAlertFilters(
+    features
+) {
+
+    var container =
+        document.getElementById(
+            "active-alerts"
+        );
+
+
+    if (!container) {
+        return;
+    }
+
+
+    var oldFilters =
+        document.getElementById(
+            "alert-filter-panel"
+        );
+
+
+    if (oldFilters) {
+        oldFilters.remove();
+    }
+
+
+    var filterPanel =
+        document.createElement(
+            "div"
+        );
+
+
+    filterPanel.id =
+        "alert-filter-panel";
+
+
+    filterPanel.style.marginBottom =
+        "20px";
+
+
+    filterPanel.innerHTML = `
+        <details
+            open
+            style="
+                background:#ffffff;
+                border:1px solid #dddddd;
+                border-radius:10px;
+                padding:14px 16px;
+                box-shadow:
+                    0 2px 6px
+                    rgba(0,0,0,0.05);
+            "
+        >
+
+            <summary
+                style="
+                    cursor:pointer;
+                    font-size:18px;
+                    font-weight:bold;
+                "
+            >
+                Filter Active Alerts
+            </summary>
+
+            <div
+                id="alert-filter-groups"
+                style="
+                    margin-top:14px;
+                "
+            >
+            </div>
+
+        </details>
+    `;
+
+
+    container.parentNode.insertBefore(
+        filterPanel,
+        container
+    );
+
+
+    var groups =
+        document.getElementById(
+            "alert-filter-groups"
+        );
+
+
+    var categories = [
+        {
+            title: "Warnings",
+            category: "warning",
+            color: "#d32f2f",
+            types: [
+                "Severe Thunderstorm Warning",
+                "Tornado Warning",
+                "Snow Squall Warning",
+                "Blizzard Warning",
+                "Winter Storm Warning",
+                "Rainfall Warning",
+                "Wind Warning",
+                "Freezing Rain Warning",
+                "Other Warning"
+            ]
+        },
+
+        {
+            title: "Watches",
+            category: "watch",
+            color: "#ef6c00",
+            types: [
+                "Severe Thunderstorm Watch",
+                "Tornado Watch",
+                "Snow Squall Watch",
+                "Winter Storm Watch",
+                "Blizzard Watch",
+                "Other Watch"
+            ]
+        },
+
+        {
+            title: "Statements",
+            category: "statement",
+            color: "#1976d2",
+            types: [
+                "Special Weather Statement",
+                "Other Statement"
+            ]
+        },
+
+        {
+            title: "Advisories",
+            category: "advisory",
+            color: "#0288d1",
+            types: [
+                "Heat Warning",
+                "Fog Advisory",
+                "Freezing Rain Advisory",
+                "Frost Advisory",
+                "Air Quality Advisory",
+                "Other Advisory"
+            ]
+        }
+    ];
+
+
+    categories.forEach(
+        function (group) {
+
+            var details =
+                document.createElement(
+                    "details"
+                );
+
+
+            details.style.marginBottom =
+                "8px";
+
+            details.style.border =
+                "1px solid #eeeeee";
+
+            details.style.borderRadius =
+                "7px";
+
+
+            var summary =
+                document.createElement(
+                    "summary"
+                );
+
+
+            summary.textContent =
+                group.title;
+
+
+            summary.style.cursor =
+                "pointer";
+
+            summary.style.fontWeight =
+                "bold";
+
+            summary.style.padding =
+                "10px";
+
+            summary.style.color =
+                group.color;
+
+
+            details.appendChild(
+                summary
+            );
+
+
+            var options =
+                document.createElement(
+                    "div"
+                );
+
+
+            options.style.padding =
+                "0 12px 10px 12px";
+
+
+            group.types.forEach(
+                function (typeName) {
+
+                    var key =
+                        makeFilterKey(
+                            group.category,
+                            typeName
+                        );
+
+
+                    activeFilters[key] =
+                        true;
+
+
+                    var label =
+                        document.createElement(
+                            "label"
+                        );
+
+
+                    label.style.display =
+                        "block";
+
+                    label.style.padding =
+                        "5px 0";
+
+                    label.style.cursor =
+                        "pointer";
+
+
+                    var checkbox =
+                        document.createElement(
+                            "input"
+                        );
+
+
+                    checkbox.type =
+                        "checkbox";
+
+                    checkbox.checked =
+                        true;
+
+
+                    checkbox.dataset.category =
+                        group.category;
+
+                    checkbox.dataset.type =
+                        typeName;
+
+
+                    checkbox.addEventListener(
+                        "change",
+                        function () {
+
+                            activeFilters[key] =
+                                this.checked;
+
+                            refreshAlertDisplay();
+                        }
+                    );
+
+
+                    label.appendChild(
+                        checkbox
+                    );
+
+
+                    label.appendChild(
+                        document.createTextNode(
+                            " " +
+                            typeName
+                        )
+                    );
+
+
+                    options.appendChild(
+                        label
+                    );
+                }
+            );
+
+
+            details.appendChild(
+                options
+            );
+
+
+            groups.appendChild(
+                details
+            );
+        }
+    );
+
+
+    // Other category
+    var otherDetails =
+        document.createElement(
+            "details"
+        );
+
+
+    otherDetails.style.marginBottom =
+        "8px";
+
+    otherDetails.style.border =
+        "1px solid #eeeeee";
+
+    otherDetails.style.borderRadius =
+        "7px";
+
+
+    otherDetails.innerHTML = `
+        <summary style="
+            cursor:pointer;
+            font-weight:bold;
+            padding:10px;
+            color:#757575;
+        ">
+            Other
+        </summary>
+
+        <label style="
+            display:block;
+            padding:10px;
+            cursor:pointer;
+        ">
+            <input
+                id="filter-other"
+                type="checkbox"
+                checked
+            >
+            Other Alerts
+        </label>
+    `;
+
+
+    groups.appendChild(
+        otherDetails
+    );
+
+
+    var otherCheckbox =
+        document.getElementById(
+            "filter-other"
+        );
+
+
+    if (otherCheckbox) {
+
+        activeFilters[
+            "other|other"
+        ] = true;
+
+
+        otherCheckbox.addEventListener(
+            "change",
+            function () {
+
+                activeFilters[
+                    "other|other"
+                ] =
+                    this.checked;
+
+                refreshAlertDisplay();
+            }
+        );
+    }
+
+
+    window.currentAlertFeatures =
+        features;
+
+
+    refreshAlertDisplay();
+}
+
+
+// ============================================================
+// FILTER KEY
+// ============================================================
+
+function makeFilterKey(
+    category,
+    typeName
+) {
+
+    return (
+        String(category)
+            .toLowerCase()
+    ) +
+    "|" +
+    (
+        String(typeName)
+            .toLowerCase()
+    );
+}
+
+
+// ============================================================
+// REFRESH DISPLAY
+// ============================================================
+
+function refreshAlertDisplay() {
+
+    var features =
+        window.currentAlertFeatures ||
+        [];
+
+
+    var container =
+        document.getElementById(
+            "active-alerts"
+        );
+
+
+    if (!container) {
+        return;
+    }
+
+
+    var cards =
+        container.querySelectorAll(
+            ".alert-card"
+        );
+
+
+    cards.forEach(
+        function (card) {
+
+            var category =
+                card.dataset.category ||
+                "other";
+
+
+            var type =
+                card.dataset.alertType ||
+                "";
+
+
+            var key =
+                makeFilterKey(
+                    category,
+                    type
+                );
+
+
+            var shouldShow =
+                activeFilters[key];
+
+
+            if (
+                typeof shouldShow ===
+                "undefined"
+            ) {
+
+                shouldShow =
+                    activeFilters[
+                        category +
+                        "|other " +
+                        (
+                            category ===
+                            "warning"
+                                ? "warning"
+                                : ""
+                        )
+                    ];
+            }
+
+
+            if (
+                typeof shouldShow ===
+                "undefined"
+            ) {
+
+                shouldShow =
+                    activeFilters[
+                        "other|other"
+                    ];
+            }
+
+
+            card.style.display =
+                shouldShow
+                    ? ""
+                    : "none";
+        }
+    );
+
+
+    plotAlertsOnMap(
+        features
     );
 }
 
@@ -644,31 +1072,23 @@ function removeExpiredAlerts(
                 feature.properties || {};
 
 
-            var expiry =
-                p.expiration_datetime;
-
-
-            if (!expiry) {
+            if (!p.expiration_datetime) {
                 return true;
             }
 
 
-            var expiryTime =
+            var expiry =
                 new Date(
-                    expiry
+                    p.expiration_datetime
                 ).getTime();
 
 
-            if (
-                isNaN(
-                    expiryTime
-                )
-            ) {
+            if (isNaN(expiry)) {
                 return true;
             }
 
 
-            return expiryTime > now;
+            return expiry > now;
         }
     );
 }
@@ -687,47 +1107,44 @@ function removeDuplicates(
     var unique = [];
 
 
-    for (
-        var i = 0;
-        i < features.length;
-        i++
-    ) {
+    features.forEach(
+        function (feature) {
 
-        var feature =
-            features[i];
-
-        var p =
-            feature.properties || {};
+            var p =
+                feature.properties || {};
 
 
-        var key =
-            (
-                p.alert_code ||
-                p.feature_id ||
-                feature.id ||
-                ""
-            ) +
-            "|" +
-            (
-                p.feature_name_en ||
-                ""
-            ) +
-            "|" +
-            (
-                p.alert_type ||
-                ""
-            );
+            var key =
+                (
+                    p.alert_code ||
+                    p.feature_id ||
+                    feature.id ||
+                    p.alert_name_en ||
+                    ""
+                ) +
+                "|" +
+                (
+                    p.feature_name_en ||
+                    ""
+                ) +
+                "|" +
+                (
+                    p.alert_type ||
+                    ""
+                );
 
 
-        if (!seen[key]) {
+            if (!seen[key]) {
 
-            seen[key] = true;
+                seen[key] =
+                    true;
 
-            unique.push(
-                feature
-            );
+                unique.push(
+                    feature
+                );
+            }
         }
-    }
+    );
 
 
     return unique;
@@ -735,7 +1152,7 @@ function removeDuplicates(
 
 
 // ============================================================
-// DISPLAY ALERT CARDS
+// DISPLAY ALERTS
 // ============================================================
 
 function displayAlerts(
@@ -748,37 +1165,55 @@ function displayAlerts(
     }
 
 
+    // Remove only the old alert cards.
+    var oldCards =
+        container.querySelectorAll(
+            ".alert-card, .no-alerts-card"
+        );
+
+
+    oldCards.forEach(
+        function (card) {
+            card.remove();
+        }
+    );
+
+
     if (
         !features ||
         features.length === 0
     ) {
 
-        container.innerHTML = `
-            <div
-                style="
-                    padding:20px;
-                    text-align:center;
-                    background:#ffffff;
-                    border:1px solid #ddd;
-                    border-radius:8px;
-                "
-            >
+        var noAlerts =
+            document.createElement(
+                "div"
+            );
 
-                <h3
-                    style="
-                        margin:0 0 8px 0;
-                        color:#2e7d32;
-                    "
-                >
+
+        noAlerts.className =
+            "no-alerts-card";
+
+
+        noAlerts.innerHTML = `
+            <div style="
+                padding:20px;
+                text-align:center;
+                background:#ffffff;
+                border:1px solid #dddddd;
+                border-radius:8px;
+            ">
+
+                <h3 style="
+                    margin:0 0 8px 0;
+                    color:#2e7d32;
+                ">
                     No Active Alerts
                 </h3>
 
-                <p
-                    style="
-                        margin:0;
-                        color:#555;
-                    "
-                >
+                <p style="
+                    margin:0;
+                    color:#555;
+                ">
                     There are currently no active
                     public weather alerts from ECCC.
                 </p>
@@ -786,11 +1221,14 @@ function displayAlerts(
             </div>
         `;
 
+
+        container.appendChild(
+            noAlerts
+        );
+
+
         return;
     }
-
-
-    var html = "";
 
 
     features.forEach(
@@ -807,46 +1245,22 @@ function displayAlerts(
 
             var type =
                 p.alert_type ||
-                "Alert";
+                "other";
+
+
+            var category =
+                getAlertCategory(
+                    p
+                );
 
 
             var area =
                 p.feature_name_en ||
-                "Canadian location";
+                "the affected area";
 
 
             var text =
                 p.alert_text_en ||
-                "No additional details are available for this alert.";
-
-
-            var impact =
-                p.impact_en ||
-                "";
-
-
-            var risk =
-                p.risk_colour_en ||
-                "";
-
-
-            var status =
-                p.status_en ||
-                "";
-
-
-            var province =
-                p.province ||
-                "";
-
-
-            var issued =
-                p.publication_datetime ||
-                "";
-
-
-            var expires =
-                p.expiration_datetime ||
                 "";
 
 
@@ -856,201 +1270,946 @@ function displayAlerts(
                 );
 
 
-            html += `
-                <div
-                    class="alert-card"
-                    style="
-                        border:1px solid #ddd;
-                        border-left:6px solid ${color};
-                        border-radius:8px;
-                        padding:18px;
-                        margin-bottom:16px;
-                        background:#ffffff;
-                        box-shadow:
-                            0 2px 6px
-                            rgba(0,0,0,.05);
-                    "
-                >
+            var summary =
+                createAlertSummary(
+                    p
+                );
 
-                    <div
-                        style="
-                            display:flex;
-                            justify-content:space-between;
-                            align-items:flex-start;
-                            gap:12px;
-                        "
-                    >
 
-                        <div>
+            var hazards =
+                extractHazards(
+                    text
+                );
 
-                            <h3
-                                style="
-                                    margin:0;
-                                    color:#111;
-                                    font-size:1.15rem;
-                                "
-                            >
-                                ${escapeHtml(name)}
-                            </h3>
 
-                            <div
-                                style="
-                                    margin-top:5px;
-                                    color:#666;
-                                    font-size:.9rem;
-                                "
-                            >
-                                ${escapeHtml(area)}
-                            </div>
+            var card =
+                document.createElement(
+                    "div"
+                );
 
+
+            card.className =
+                "alert-card";
+
+
+            card.dataset.category =
+                category;
+
+
+            card.dataset.alertType =
+                getAlertSubtype(
+                    p
+                );
+
+
+            card.style.border =
+                "1px solid #dddddd";
+
+            card.style.borderLeft =
+                "6px solid " +
+                color;
+
+            card.style.borderRadius =
+                "9px";
+
+            card.style.padding =
+                "18px";
+
+            card.style.marginBottom =
+                "16px";
+
+            card.style.background =
+                "#ffffff";
+
+            card.style.boxShadow =
+                "0 2px 6px rgba(0,0,0,.05)";
+
+
+            var hazardHTML = "";
+
+
+            if (
+                hazards.length > 0
+            ) {
+
+                hazardHTML = `
+                    <div style="
+                        margin-top:12px;
+                    ">
+
+                        <strong>
+                            Main hazards:
+                        </strong>
+
+                        <ul style="
+                            margin:6px 0 0 20px;
+                            padding:0;
+                        ">
+
+                            ${hazards.map(
+                                function (hazard) {
+
+                                    return `
+                                        <li>
+                                            ${escapeHtml(
+                                                hazard
+                                            )}
+                                        </li>
+                                    `;
+                                }
+                            ).join("")}
+
+                        </ul>
+
+                    </div>
+                `;
+            }
+
+
+            card.innerHTML = `
+                <div style="
+                    display:flex;
+                    justify-content:space-between;
+                    align-items:flex-start;
+                    gap:12px;
+                ">
+
+                    <div>
+
+                        <h3 style="
+                            margin:0;
+                            font-size:1.2rem;
+                            color:#111;
+                        ">
+                            ${escapeHtml(
+                                summary.title
+                            )}
+                        </h3>
+
+                        <div style="
+                            margin-top:5px;
+                            color:#555;
+                            font-size:.92rem;
+                        ">
+                            ${escapeHtml(
+                                summary.location
+                            )}
                         </div>
 
-
-                        <span
-                            style="
-                                background:${color};
-                                color:#ffffff;
-                                padding:5px 9px;
-                                border-radius:5px;
-                                font-size:.72rem;
-                                font-weight:bold;
-                                white-space:nowrap;
-                            "
-                        >
-                            ${escapeHtml(type)}
-                        </span>
-
                     </div>
 
 
+                    <span style="
+                        background:${color};
+                        color:#fff;
+                        padding:5px 9px;
+                        border-radius:5px;
+                        font-size:.72rem;
+                        font-weight:bold;
+                        white-space:nowrap;
+                    ">
+                        ${escapeHtml(
+                            type
+                        )}
+                    </span>
+
+                </div>
+
+
+                <div style="
+                    margin-top:12px;
+                    padding:11px;
+                    background:#f6f7f9;
+                    border-radius:7px;
+                    line-height:1.5;
+                ">
+                    ${escapeHtml(
+                        summary.oneLine
+                    )}
+                </div>
+
+
+                ${hazardHTML}
+
+
+                <details style="
+                    margin-top:14px;
+                ">
+
+                    <summary style="
+                        cursor:pointer;
+                        font-weight:bold;
+                    ">
+                        Full alert details
+                    </summary>
+
+                    <div style="
+                        margin-top:10px;
+                        white-space:pre-line;
+                        line-height:1.55;
+                        color:#333;
+                    ">
+                        ${escapeHtml(
+                            text ||
+                            "No additional details are available."
+                        )}
+                    </div>
+
+                </details>
+
+
+                <div style="
+                    margin-top:12px;
+                    padding-top:10px;
+                    border-top:1px solid #eeeeee;
+                    font-size:.82rem;
+                    color:#666;
+                    line-height:1.6;
+                ">
+
                     ${
-                        province
+                        p.risk_colour_en
                             ? `
-                                <div
-                                    style="
-                                        margin-top:7px;
-                                        color:#666;
-                                        font-size:.85rem;
-                                    "
-                                >
-                                    <strong>
-                                        Province:
-                                    </strong>
-                                    ${escapeHtml(province)}
-                                </div>
+                                <strong>
+                                    Risk:
+                                </strong>
+                                ${escapeHtml(
+                                    p.risk_colour_en
+                                )}
+                                <br>
                               `
                             : ""
                     }
 
-
-                    <div
-                        style="
-                            margin-top:14px;
-                            color:#333;
-                            line-height:1.6;
-                            white-space:pre-line;
-                        "
-                    >
-                        ${escapeHtml(text)}
-                    </div>
-
-
                     ${
-                        impact
+                        p.publication_datetime
                             ? `
-                                <div
-                                    style="
-                                        margin-top:12px;
-                                        color:#555;
-                                        font-size:.9rem;
-                                    "
-                                >
-                                    <strong>
-                                        Impact:
-                                    </strong>
-                                    ${escapeHtml(impact)}
-                                </div>
+                                <strong>
+                                    Issued:
+                                </strong>
+                                ${escapeHtml(
+                                    formatDate(
+                                        p.publication_datetime
+                                    )
+                                )}
+                                <br>
                               `
                             : ""
                     }
 
-
-                    <div
-                        style="
-                            margin-top:12px;
-                            padding-top:10px;
-                            border-top:1px solid #eee;
-                            color:#666;
-                            font-size:.82rem;
-                            line-height:1.6;
-                        "
-                    >
-
-                        ${
-                            risk
-                                ? `
-                                    <strong>
-                                        Risk:
-                                    </strong>
-                                    ${escapeHtml(risk)}
-                                    <br>
-                                  `
-                                : ""
-                        }
-
-                        ${
-                            status
-                                ? `
-                                    <strong>
-                                        Status:
-                                    </strong>
-                                    ${escapeHtml(status)}
-                                    <br>
-                                  `
-                                : ""
-                        }
-
-                        ${
-                            issued
-                                ? `
-                                    <strong>
-                                        Issued:
-                                    </strong>
-                                    ${escapeHtml(
-                                        formatDate(
-                                            issued
-                                        )
-                                    )}
-                                    <br>
-                                  `
-                                : ""
-                        }
-
-                        ${
-                            expires
-                                ? `
-                                    <strong>
-                                        Expires:
-                                    </strong>
-                                    ${escapeHtml(
-                                        formatDate(
-                                            expires
-                                        )
-                                    )}
-                                  `
-                                : ""
-                        }
-
-                    </div>
+                    ${
+                        p.expiration_datetime
+                            ? `
+                                <strong>
+                                    Expires:
+                                </strong>
+                                ${escapeHtml(
+                                    formatDate(
+                                        p.expiration_datetime
+                                    )
+                                )}
+                              `
+                            : ""
+                    }
 
                 </div>
             `;
+
+
+            container.appendChild(
+                card
+            );
+        }
+    );
+}
+
+
+// ============================================================
+// CREATE EASY-TO-READ SUMMARY
+// ============================================================
+
+function createAlertSummary(
+    props
+) {
+
+    var type =
+        props.alert_name_en ||
+        props.alert_short_name_en ||
+        "Weather Alert";
+
+
+    var area =
+        props.feature_name_en ||
+        "the affected area";
+
+
+    var text =
+        props.alert_text_en ||
+        "";
+
+
+    var cleanText =
+        cleanAlertText(
+            text
+        );
+
+
+    var hazards =
+        extractHazards(
+            text
+        );
+
+
+    var oneLine =
+        type +
+        " has been issued for " +
+        area +
+        ".";
+
+
+    if (
+        hazards.length > 0
+    ) {
+
+        oneLine +=
+            " Main hazards: " +
+            hazards.join(
+                "; "
+            ) +
+            ".";
+
+    } else if (
+        cleanText
+    ) {
+
+        oneLine +=
+            " " +
+            limitText(
+                cleanText,
+                240
+            );
+    }
+
+
+    return {
+        title:
+            type,
+
+        location:
+            area,
+
+        oneLine:
+            oneLine
+    };
+}
+
+
+// ============================================================
+// EXTRACT MAIN HAZARDS
+// ============================================================
+
+function extractHazards(
+    text
+) {
+
+    if (!text) {
+        return [];
+    }
+
+
+    var results = [];
+
+
+    var normalized =
+        String(text)
+            .replace(
+                /\r/g,
+                " "
+            )
+            .replace(
+                /\n+/g,
+                " "
+            )
+            .replace(
+                /\s+/g,
+                " "
+            );
+
+
+    var patterns = [
+
+        /damaging wind gusts? (?:up to|of)\s+[^.,;]+/i,
+
+        /wind gusts? (?:up to|of)\s+[^.,;]+/i,
+
+        /hail (?:up to|of)\s+[^.,;]+/i,
+
+        /tornado(?:es)?[^.,;]*/i,
+
+        /flash flooding[^.,;]*/i,
+
+        /flooding[^.,;]*/i,
+
+        /heavy rainfall[^.,;]*/i,
+
+        /rainfall (?:amounts|rates)[^.,;]*/i,
+
+        /heavy snow[^.,;]*/i,
+
+        /snowfall (?:amounts|rates)[^.,;]*/i,
+
+        /snow squalls?[^.,;]*/i,
+
+        /blowing snow[^.,;]*/i,
+
+        /freezing rain[^.,;]*/i,
+
+        /ice pellets[^.,;]*/i,
+
+        /visibility (?:may be|reduced to)[^.,;]*/i,
+
+        /dangerously cold temperatures?[^.,;]*/i,
+
+        /extreme cold[^.,;]*/i,
+
+        /poor air quality[^.,;]*/i,
+
+        /high winds?[^.,;]*/i
+
+    ];
+
+
+    patterns.forEach(
+        function (pattern) {
+
+            var match =
+                normalized.match(
+                    pattern
+                );
+
+
+            if (
+                match &&
+                match[0]
+            ) {
+
+                var value =
+                    match[0]
+                        .trim();
+
+
+                if (
+                    !results.some(
+                        function (existing) {
+
+                            return existing
+                                .toLowerCase() ===
+                                value
+                                    .toLowerCase();
+                        }
+                    )
+                ) {
+
+                    results.push(
+                        capitalizeFirst(
+                            value
+                        )
+                    );
+                }
+            }
         }
     );
 
 
-    container.innerHTML =
-        html;
+    return results.slice(
+        0,
+        5
+    );
+}
+
+
+// ============================================================
+// CLEAN ALERT TEXT
+// ============================================================
+
+function cleanAlertText(
+    text
+) {
+
+    return String(
+        text || ""
+    )
+        .replace(
+            /\r/g,
+            " "
+        )
+        .replace(
+            /\n+/g,
+            " "
+        )
+        .replace(
+            /\s+/g,
+            " "
+        )
+        .trim();
+}
+
+
+// ============================================================
+// LIMIT TEXT
+// ============================================================
+
+function limitText(
+    text,
+    max
+) {
+
+    if (
+        text.length <= max
+    ) {
+        return text;
+    }
+
+
+    return (
+        text.substring(
+            0,
+            max
+        ).trim() +
+        "..."
+    );
+}
+
+
+// ============================================================
+// CAPITALIZE
+// ============================================================
+
+function capitalizeFirst(
+    text
+) {
+
+    if (!text) {
+        return "";
+    }
+
+
+    return (
+        text.charAt(0).toUpperCase() +
+        text.slice(1)
+    );
+}
+
+
+// ============================================================
+// ALERT SUBTYPE
+// ============================================================
+
+function getAlertSubtype(
+    props
+) {
+
+    var category =
+        getAlertCategory(
+            props
+        );
+
+
+    var name =
+        String(
+            props.alert_name_en ||
+            props.alert_short_name_en ||
+            ""
+        )
+            .toLowerCase();
+
+
+    var type =
+        String(
+            props.alert_type ||
+            ""
+        )
+            .toLowerCase();
+
+
+    var combined =
+        name +
+        " " +
+        type;
+
+
+    if (
+        category ===
+        "warning"
+    ) {
+
+        if (
+            combined.includes(
+                "tornado"
+            )
+        ) {
+            return "severe thunderstorm warning"
+                .includes(
+                    ""
+                )
+                ? findWarningSubtype(
+                    combined,
+                    "Tornado Warning"
+                )
+                : "Other Warning";
+        }
+
+
+        return findWarningSubtype(
+            combined,
+            "Other Warning"
+        );
+    }
+
+
+    if (
+        category ===
+        "watch"
+    ) {
+
+        return findWatchSubtype(
+            combined
+        );
+    }
+
+
+    if (
+        category ===
+        "statement"
+    ) {
+
+        if (
+            combined.includes(
+                "special weather statement"
+            )
+        ) {
+            return "Special Weather Statement";
+        }
+
+
+        return "Other Statement";
+    }
+
+
+    if (
+        category ===
+        "advisory"
+    ) {
+
+        return findAdvisorySubtype(
+            combined
+        );
+    }
+
+
+    return "Other Alerts";
+}
+
+
+// ============================================================
+// WARNING SUBTYPE
+// ============================================================
+
+function findWarningSubtype(
+    text,
+    fallback
+) {
+
+    if (
+        text.includes(
+            "tornado"
+        )
+    ) {
+        return "Tornado Warning";
+    }
+
+
+    if (
+        text.includes(
+            "severe thunderstorm"
+        )
+    ) {
+        return "Severe Thunderstorm Warning";
+    }
+
+
+    if (
+        text.includes(
+            "snow squall"
+        )
+    ) {
+        return "Snow Squall Warning";
+    }
+
+
+    if (
+        text.includes(
+            "blizzard"
+        )
+    ) {
+        return "Blizzard Warning";
+    }
+
+
+    if (
+        text.includes(
+            "winter storm"
+        )
+    ) {
+        return "Winter Storm Warning";
+    }
+
+
+    if (
+        text.includes(
+            "rainfall"
+        )
+    ) {
+        return "Rainfall Warning";
+    }
+
+
+    if (
+        text.includes(
+            "wind"
+        )
+    ) {
+        return "Wind Warning";
+    }
+
+
+    if (
+        text.includes(
+            "freezing rain"
+        )
+    ) {
+        return "Freezing Rain Warning";
+    }
+
+
+    return fallback;
+}
+
+
+// ============================================================
+// WATCH SUBTYPE
+// ============================================================
+
+function findWatchSubtype(
+    text
+) {
+
+    if (
+        text.includes(
+            "tornado"
+        )
+    ) {
+        return "Tornado Watch";
+    }
+
+
+    if (
+        text.includes(
+            "severe thunderstorm"
+        )
+    ) {
+        return "Severe Thunderstorm Watch";
+    }
+
+
+    if (
+        text.includes(
+            "snow squall"
+        )
+    ) {
+        return "Snow Squall Watch";
+    }
+
+
+    if (
+        text.includes(
+            "winter storm"
+        )
+    ) {
+        return "Winter Storm Watch";
+    }
+
+
+    if (
+        text.includes(
+            "blizzard"
+        )
+    ) {
+        return "Blizzard Watch";
+    }
+
+
+    return "Other Watch";
+}
+
+
+// ============================================================
+// ADVISORY SUBTYPE
+// ============================================================
+
+function findAdvisorySubtype(
+    text
+) {
+
+    if (
+        text.includes(
+            "heat"
+        )
+    ) {
+        return "Heat Warning";
+    }
+
+
+    if (
+        text.includes(
+            "fog"
+        )
+    ) {
+        return "Fog Advisory";
+    }
+
+
+    if (
+        text.includes(
+            "freezing rain"
+        )
+    ) {
+        return "Freezing Rain Advisory";
+    }
+
+
+    if (
+        text.includes(
+            "frost"
+        )
+    ) {
+        return "Frost Advisory";
+    }
+
+
+    if (
+        text.includes(
+            "air quality"
+        )
+    ) {
+        return "Air Quality Advisory";
+    }
+
+
+    return "Other Advisory";
+}
+
+
+// ============================================================
+// ALERT CATEGORY
+// ============================================================
+
+function getAlertCategory(
+    props
+) {
+
+    var type =
+        String(
+            props.alert_type ||
+            ""
+        )
+            .toLowerCase()
+            .trim();
+
+
+    if (
+        type ===
+        "warning"
+    ) {
+        return "warning";
+    }
+
+
+    if (
+        type ===
+        "watch"
+    ) {
+        return "watch";
+    }
+
+
+    if (
+        type ===
+        "statement"
+    ) {
+        return "statement";
+    }
+
+
+    if (
+        type ===
+        "advisory"
+    ) {
+        return "advisory";
+    }
+
+
+    return "other";
+}
+
+
+// ============================================================
+// ALERT COLOUR
+// ============================================================
+
+function getAlertColor(
+    props
+) {
+
+    var category =
+        getAlertCategory(
+            props
+        );
+
+
+    if (
+        category ===
+        "warning"
+    ) {
+        return "#d32f2f";
+    }
+
+
+    if (
+        category ===
+        "watch"
+    ) {
+        return "#ef6c00";
+    }
+
+
+    if (
+        category ===
+        "statement"
+    ) {
+        return "#1976d2";
+    }
+
+
+    if (
+        category ===
+        "advisory"
+    ) {
+        return "#0288d1";
+    }
+
+
+    return "#757575";
 }
 
 
@@ -1096,6 +2255,51 @@ function plotAlertsOnMap(
                 getAlertCategory(
                     p
                 );
+
+
+            var subtype =
+                getAlertSubtype(
+                    p
+                );
+
+
+            var key =
+                makeFilterKey(
+                    category,
+                    subtype
+                );
+
+
+            var allowed =
+                activeFilters[key];
+
+
+            if (
+                typeof allowed ===
+                "undefined"
+            ) {
+
+                if (
+                    category ===
+                    "other"
+                ) {
+
+                    allowed =
+                        activeFilters[
+                            "other|other"
+                        ];
+
+                } else {
+
+                    allowed =
+                        true;
+                }
+            }
+
+
+            if (!allowed) {
+                return;
+            }
 
 
             var color =
@@ -1161,25 +2365,22 @@ function plotAlertsOnMap(
                                     "";
 
 
-                                var expires =
-                                    props.expiration_datetime ||
-                                    "";
+                                var hazards =
+                                    extractHazards(
+                                        text
+                                    );
 
 
                                 alertLayer.bindPopup(
                                     `
-                                    <div
-                                        style="
-                                            min-width:240px;
-                                            max-width:320px;
-                                        "
-                                    >
+                                    <div style="
+                                        min-width:240px;
+                                        max-width:330px;
+                                    ">
 
-                                        <h3
-                                            style="
-                                                margin:0 0 8px 0;
-                                            "
-                                        >
+                                        <h3 style="
+                                            margin:0 0 8px 0;
+                                        ">
                                             ${escapeHtml(
                                                 title
                                             )}
@@ -1192,7 +2393,9 @@ function plotAlertsOnMap(
                                                     <strong>
                                                         Type:
                                                     </strong>
-                                                    ${escapeHtml(type)}
+                                                    ${escapeHtml(
+                                                        type
+                                                    )}
                                                     <br>
                                                   `
                                                 : ""
@@ -1205,7 +2408,9 @@ function plotAlertsOnMap(
                                                     <strong>
                                                         Area:
                                                     </strong>
-                                                    ${escapeHtml(area)}
+                                                    ${escapeHtml(
+                                                        area
+                                                    )}
                                                     <br>
                                                   `
                                                 : ""
@@ -1213,34 +2418,51 @@ function plotAlertsOnMap(
 
 
                                         ${
-                                            expires
+                                            hazards.length > 0
                                                 ? `
+                                                    <br>
                                                     <strong>
-                                                        Expires:
+                                                        Main hazards:
                                                     </strong>
-                                                    ${escapeHtml(
-                                                        formatDate(
-                                                            expires
-                                                        )
-                                                    )}
+
+                                                    <ul
+                                                        style="
+                                                            margin:5px 0 0 18px;
+                                                            padding:0;
+                                                        "
+                                                    >
+                                                        ${hazards.map(
+                                                            function (
+                                                                hazard
+                                                            ) {
+
+                                                                return `
+                                                                    <li>
+                                                                        ${escapeHtml(
+                                                                            hazard
+                                                                        )}
+                                                                    </li>
+                                                                `;
+                                                            }
+                                                        ).join("")}
+                                                    </ul>
                                                   `
                                                 : ""
                                         }
 
 
                                         ${
-                                            text
+                                            props.expiration_datetime
                                                 ? `
-                                                    <hr>
-                                                    <div
-                                                        style="
-                                                            max-height:180px;
-                                                            overflow:auto;
-                                                            line-height:1.45;
-                                                        "
-                                                    >
-                                                        ${escapeHtml(text)}
-                                                    </div>
+                                                    <br>
+                                                    <strong>
+                                                        Expires:
+                                                    </strong>
+                                                    ${escapeHtml(
+                                                        formatDate(
+                                                            props.expiration_datetime
+                                                        )
+                                                    )}
                                                   `
                                                 : ""
                                         }
@@ -1361,108 +2583,6 @@ function plotAlertsOnMap(
 
 
 // ============================================================
-// ALERT CATEGORY
-// ============================================================
-
-function getAlertCategory(
-    props
-) {
-
-    var type =
-        String(
-            props.alert_type ||
-            ""
-        ).toLowerCase()
-         .trim();
-
-
-    if (
-        type ===
-        "warning"
-    ) {
-        return "warning";
-    }
-
-
-    if (
-        type ===
-        "watch"
-    ) {
-        return "watch";
-    }
-
-
-    if (
-        type ===
-        "statement"
-    ) {
-        return "statement";
-    }
-
-
-    if (
-        type ===
-        "advisory"
-    ) {
-        return "advisory";
-    }
-
-
-    return "other";
-}
-
-
-// ============================================================
-// ALERT COLOUR
-// ============================================================
-
-function getAlertColor(
-    props
-) {
-
-    var category =
-        getAlertCategory(
-            props
-        );
-
-
-    if (
-        category ===
-        "warning"
-    ) {
-        return "#d32f2f";
-    }
-
-
-    if (
-        category ===
-        "watch"
-    ) {
-        return "#ef6c00";
-    }
-
-
-    if (
-        category ===
-        "statement"
-    ) {
-        return "#1976d2";
-    }
-
-
-    if (
-        category ===
-        "advisory"
-    ) {
-        return "#0288d1";
-    }
-
-
-    return "#757575";
-}
-
-
-// ============================================================
 // STATUS
 // ============================================================
 
@@ -1510,7 +2630,7 @@ function updateStatus(
 
 
 // ============================================================
-// DATE
+// DATE FORMAT
 // ============================================================
 
 function formatDate(
@@ -1551,7 +2671,7 @@ function formatDate(
 
 
 // ============================================================
-// ESCAPE HTML
+// HTML ESCAPING
 // ============================================================
 
 function escapeHtml(
@@ -1603,7 +2723,7 @@ document.addEventListener(
         loadAlerts();
 
 
-        // Refresh every 5 minutes
+        // Update every 5 minutes
         setInterval(
             loadAlerts,
             5 * 60 * 1000
