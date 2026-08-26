@@ -1,7 +1,7 @@
 console.log("ECCC ALERTS JS LOADED");
 
 var ECCC_ALERTS_API =
-    "https://api.weather.gc.ca/collections/weather-alerts/items?f=geojson&limit=100";
+    "https://api.weather.gc.ca/collections/weather-alerts/items?f=json&limit=100";
 
 var map = null;
 
