@@ -1,30 +1,34 @@
-// ============================================================
-// Canada Severe Weather Alerts
-// Live Environment and Climate Change Canada (ECCC) data
-// ============================================================
+// ======================================================
+// CANADA SEVERE WEATHER ALERTS
+// Live ECCC alerts + Leaflet alert map
+// ======================================================
 
-const ALERT_API =
+const ECCC_URL =
   "https://api.weather.gc.ca/collections/weather-alerts/items?f=geojson&limit=1000";
 
-let alertMap = null;
-let alertLayer = null;
+let map;
+let alertLayer;
 
+// ======================================================
+// START MAP
+// ======================================================
 
-// ============================================================
-// MAP
-// ============================================================
+function startMap() {
+  const mapBox = document.getElementById("map");
 
-function initializeMap() {
-  const mapElement = document.getElementById("map");
-
-  if (!mapElement || typeof L === "undefined") {
-    console.error("Map element or Leaflet was not found.");
+  if (!mapBox) {
+    console.error("Map container not found.");
     return;
   }
 
-  alertMap = L.map("map", {
-    zoomControl: true
-  }).setView([56.1304, -106.3468], 4);
+  if (typeof L === "undefined") {
+    console.error("Leaflet did not load.");
+    mapBox.innerHTML =
+      "<p style='padding:20px;'>Map library failed to load.</p>";
+    return;
+  }
+
+  map = L.map("map").setView([56.1304, -106.3468], 4);
 
   L.tileLayer(
     "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
@@ -32,12 +36,12 @@ function initializeMap() {
       maxZoom: 18,
       attribution: "&copy; OpenStreetMap contributors"
     }
-  ).addTo(alertMap);
+  ).addTo(map);
 
   alertLayer = L.geoJSON(null, {
-    style: feature => getAlertStyle(feature.properties || {}),
+    style: styleAlert,
 
-    onEachFeature: (feature, layer) => {
+    onEachFeature: function (feature, layer) {
       const p = feature.properties || {};
 
       const name =
@@ -48,53 +52,43 @@ function initializeMap() {
 
       const area =
         p.feature_name_en ||
-        "Canadian location";
+        "Canadian area";
 
       const type =
         p.alert_type ||
         "Weather Alert";
 
-      const expires =
-        formatDate(
-          p.expiration_datetime ||
-          p.event_end_datetime
-        );
-
       layer.bindPopup(`
-        <div style="min-width:220px;">
-          <strong>${escapeHTML(name)}</strong>
-          <br><br>
-          <strong>Type:</strong> ${escapeHTML(type)}
-          <br>
-          <strong>Area:</strong> ${escapeHTML(area)}
-          <br>
-          <strong>Expires:</strong> ${escapeHTML(expires)}
-        </div>
+        <strong>${escapeHTML(name)}</strong>
+        <br><br>
+        <strong>Type:</strong> ${escapeHTML(type)}
+        <br>
+        <strong>Area:</strong> ${escapeHTML(area)}
       `);
     }
-  }).addTo(alertMap);
+  }).addTo(map);
+
+  // Sometimes Leaflet needs a moment to calculate the map size.
+  setTimeout(() => {
+    map.invalidateSize();
+  }, 300);
 }
 
 
-// ============================================================
-// ALERT COLOURS
-// ============================================================
+// ======================================================
+// ALERT MAP STYLE
+// ======================================================
 
-function getAlertStyle(properties) {
-  const type = String(
-    properties.alert_type || ""
-  ).toLowerCase();
+function styleAlert(feature) {
+  const p = feature.properties || {};
 
-  const name = String(
-    properties.alert_name_en || ""
-  ).toLowerCase();
+  const type =
+    String(p.alert_type || "").toLowerCase();
 
-  const risk = String(
-    properties.risk_colour_en || ""
-  ).toLowerCase();
+  const name =
+    String(p.alert_name_en || "").toLowerCase();
 
-
-  // Severe warnings
+  // WARNING
   if (
     type.includes("warning") ||
     name.includes("warning")
@@ -107,8 +101,7 @@ function getAlertStyle(properties) {
     };
   }
 
-
-  // Watches
+  // WATCH
   if (
     type.includes("watch") ||
     name.includes("watch")
@@ -121,30 +114,7 @@ function getAlertStyle(properties) {
     };
   }
 
-
-  // Orange risk
-  if (risk.includes("orange")) {
-    return {
-      color: "#e65100",
-      weight: 2,
-      fillColor: "#fb8c00",
-      fillOpacity: 0.35
-    };
-  }
-
-
-  // Yellow risk
-  if (risk.includes("yellow")) {
-    return {
-      color: "#f9a825",
-      weight: 2,
-      fillColor: "#fdd835",
-      fillOpacity: 0.30
-    };
-  }
-
-
-  // Advisories / statements / other
+  // ADVISORY / OTHER
   return {
     color: "#1565c0",
     weight: 2,
@@ -154,34 +124,23 @@ function getAlertStyle(properties) {
 }
 
 
-// ============================================================
-// LOAD LIVE ALERTS
-// ============================================================
+// ======================================================
+// LOAD LIVE ECCC ALERTS
+// ======================================================
 
 async function loadAlerts() {
-
-  const alertsContainer =
-    document.querySelector(".alerts");
-
-  if (!alertsContainer) {
-    console.error("Alerts container was not found.");
-    return;
-  }
-
+  const alertBox = document.querySelector(".alerts");
 
   try {
-
-    const response = await fetch(ALERT_API, {
+    const response = await fetch(ECCC_URL, {
       cache: "no-store"
     });
 
-
     if (!response.ok) {
       throw new Error(
-        `ECCC returned HTTP ${response.status}`
+        "ECCC HTTP " + response.status
       );
     }
-
 
     const data = await response.json();
 
@@ -190,117 +149,120 @@ async function loadAlerts() {
         ? data.features
         : [];
 
-
-    // --------------------------------------------------------
     // Remove expired alerts
-    // --------------------------------------------------------
-
     const now = Date.now();
 
     const activeAlerts = features.filter(feature => {
-
       const p = feature.properties || {};
 
       if (!p.expiration_datetime) {
         return true;
       }
 
-      const expiration =
+      const expiry =
         new Date(
           p.expiration_datetime
         ).getTime();
 
       return (
-        Number.isNaN(expiration) ||
-        expiration > now
+        Number.isNaN(expiry) ||
+        expiry > now
       );
     });
 
 
-    // --------------------------------------------------------
-    // CLEAR MAP
-    // --------------------------------------------------------
+    // -----------------------------
+    // UPDATE MAP
+    // -----------------------------
 
     if (alertLayer) {
       alertLayer.clearLayers();
+
+      if (activeAlerts.length > 0) {
+        alertLayer.addData({
+          type: "FeatureCollection",
+          features: activeAlerts
+        });
+
+        const bounds =
+          alertLayer.getBounds();
+
+        if (bounds.isValid()) {
+          map.fitBounds(bounds, {
+            padding: [20, 20],
+            maxZoom: 7
+          });
+        }
+      } else {
+        map.setView(
+          [56.1304, -106.3468],
+          4
+        );
+      }
     }
 
 
-    // --------------------------------------------------------
-    // ADD LIVE ALERT AREAS TO MAP
-    // --------------------------------------------------------
+    // -----------------------------
+    // UPDATE STATUS
+    // -----------------------------
 
-    if (
-      alertLayer &&
-      activeAlerts.length > 0
-    ) {
+    const status =
+      document.querySelector(".status");
 
-      alertLayer.addData({
-        type: "FeatureCollection",
-        features: activeAlerts
-      });
+    if (status) {
+      if (activeAlerts.length === 0) {
+        status.textContent =
+          "● No active weather alerts";
 
-      fitMapToAlerts(activeAlerts);
+        status.style.color =
+          "#2e7d32";
+      } else {
+        status.textContent =
+          `● ${activeAlerts.length} active weather alert${
+            activeAlerts.length === 1
+              ? ""
+              : "s"
+          }`;
+
+        status.style.color =
+          "#b3261e";
+      }
     }
 
 
-    // --------------------------------------------------------
-    // NO ALERTS
-    // --------------------------------------------------------
+    // -----------------------------
+    // UPDATE ALERT CARDS
+    // -----------------------------
+
+    if (!alertBox) {
+      return;
+    }
 
     if (activeAlerts.length === 0) {
 
-      alertsContainer.innerHTML = `
+      alertBox.innerHTML = `
         <div class="alert-card no-alerts">
-
           <h3>No Active Alerts</h3>
-
           <p>
             Environment and Climate Change Canada
-            is not currently reporting any active
-            weather alerts in this feed.
+            is not currently reporting active alerts.
           </p>
-
         </div>
       `;
-
-      updateStatus(0);
 
       return;
     }
 
 
-    // --------------------------------------------------------
-    // SORT ALERTS
-    // --------------------------------------------------------
-
-    activeAlerts.sort(
-      (a, b) =>
-        severityScore(b.properties || {}) -
-        severityScore(a.properties || {})
-    );
-
-
-    // --------------------------------------------------------
-    // CREATE ALERT CARDS
-    // --------------------------------------------------------
-
-    alertsContainer.innerHTML =
+    alertBox.innerHTML =
       activeAlerts
-        .map((feature, index) =>
-          createAlertCard(feature, index)
-        )
+        .map(createAlertCard)
         .join("");
 
 
-    updateStatus(
-      activeAlerts.length
-    );
-
-
-    // --------------------------------------------------------
+    // -----------------------------
     // DETAILS BUTTONS
-    // --------------------------------------------------------
+    // -----------------------------
 
     document
       .querySelectorAll(".details-button")
@@ -308,24 +270,23 @@ async function loadAlerts() {
 
         button.addEventListener(
           "click",
-          () => {
+          function () {
 
-            const details =
+            const target =
               document.getElementById(
-                button.dataset.target
+                this.dataset.target
               );
 
-            if (!details) {
+            if (!target) {
               return;
             }
 
-            const hidden =
-              details.classList.toggle(
-                "hidden"
-              );
+            target.classList.toggle(
+              "hidden"
+            );
 
-            button.textContent =
-              hidden
+            this.textContent =
+              target.classList.contains("hidden")
                 ? "View Details"
                 : "Hide Details";
           }
@@ -337,240 +298,147 @@ async function loadAlerts() {
   } catch (error) {
 
     console.error(
-      "Unable to load ECCC alerts:",
+      "ECCC alert error:",
       error
     );
 
-
-    alertsContainer.innerHTML = `
-      <div class="alert-card">
-
-        <div class="alert-header">
-
-          <h3>
-            Alert Data Unavailable
-          </h3>
-
-          <span class="badge">
-            ERROR
-          </span>
-
-        </div>
-
-        <div class="alert-content">
-
+    if (alertBox) {
+      alertBox.innerHTML = `
+        <div class="alert-card">
+          <h3>Unable to load alerts</h3>
           <p>
-            The live Environment and Climate
-            Change Canada alert feed could not
+            The live ECCC alert service could not
             be reached right now.
           </p>
-
           <button
             class="details-button"
-            onclick="loadAlerts()"
-          >
+            onclick="loadAlerts()">
             Try Again
           </button>
-
         </div>
-
-      </div>
-    `;
+      `;
+    }
   }
 }
 
 
-// ============================================================
-// FIT MAP TO ACTIVE ALERTS
-// ============================================================
-
-function fitMapToAlerts(features) {
-
-  if (!alertMap || !alertLayer) {
-    return;
-  }
-
-
-  const bounds =
-    alertLayer.getBounds();
-
-
-  if (bounds.isValid()) {
-
-    alertMap.fitBounds(bounds, {
-      padding: [30, 30],
-      maxZoom: 7
-    });
-
-  } else {
-
-    alertMap.setView(
-      [56.1304, -106.3468],
-      4
-    );
-
-  }
-}
-
-
-// ============================================================
-// ALERT CARD
-// ============================================================
+// ======================================================
+// CREATE ALERT CARD
+// ======================================================
 
 function createAlertCard(feature, index) {
-
   const p = feature.properties || {};
 
-
-  const alertName =
+  const name =
     p.alert_name_en ||
     p.alert_short_name_en ||
     p.alert_type ||
     "Weather Alert";
 
-
   const area =
     p.feature_name_en ||
-    "Canadian location";
+    "Canadian area";
 
-
-  const alertType =
+  const type =
     p.alert_type ||
     "Weather Alert";
 
-
-  const status =
-    p.status_en ||
-    "Active";
-
-
-  const riskColour =
+  const risk =
     p.risk_colour_en ||
     "Not specified";
 
-
-  const alertText =
+  const text =
     p.alert_text_en ||
-    "No additional information was provided.";
-
-
-  const impact =
-    p.impact_en ||
-    "Not specified";
-
+    "No additional information available.";
 
   const issued =
     formatDate(
       p.publication_datetime
     );
 
-
   const expires =
     formatDate(
-      p.expiration_datetime ||
-      p.event_end_datetime
+      p.expiration_datetime
     );
 
+  let cardClass =
+    "statement-alert";
+
+  if (
+    type.toLowerCase().includes("warning") ||
+    name.toLowerCase().includes("warning")
+  ) {
+    cardClass = "warning-alert";
+  }
+  else if (
+    type.toLowerCase().includes("watch") ||
+    name.toLowerCase().includes("watch")
+  ) {
+    cardClass = "watch-alert";
+  }
+  else if (
+    type.toLowerCase().includes("advisory")
+  ) {
+    cardClass = "advisory-alert";
+  }
 
   const detailsId =
-    `alert-details-${index}`;
-
-
-  const cardClass =
-    getCardClass(p);
-
+    "alert-details-" + index;
 
   return `
-
-    <article
-      class="alert-card ${cardClass}"
-    >
+    <article class="alert-card ${cardClass}">
 
       <div class="alert-header">
 
         <div>
-
           <h3>
-            ${escapeHTML(alertName)}
+            ${escapeHTML(name)}
           </h3>
 
           <strong>
             ${escapeHTML(area)}
           </strong>
-
         </div>
 
         <span class="badge">
-          ${escapeHTML(alertType)}
+          ${escapeHTML(type)}
         </span>
 
       </div>
 
-
       <div class="alert-content">
 
         <p>
-          <strong>Status:</strong>
-          ${escapeHTML(status)}
-        </p>
-
-
-        <p>
           <strong>Risk:</strong>
-          ${escapeHTML(riskColour)}
+          ${escapeHTML(risk)}
         </p>
-
 
         <button
           class="details-button"
-          data-target="${detailsId}"
-        >
+          data-target="${detailsId}">
           View Details
         </button>
 
-
         <div
           id="${detailsId}"
-          class="hidden"
-        >
+          class="hidden">
 
           <hr>
-
-          <p>
-            <strong>Alert:</strong>
-            ${escapeHTML(alertName)}
-          </p>
-
-
-          <p>
-            <strong>Area:</strong>
-            ${escapeHTML(area)}
-          </p>
-
 
           <p>
             <strong>Issued:</strong>
             ${escapeHTML(issued)}
           </p>
 
-
           <p>
             <strong>Expires:</strong>
             ${escapeHTML(expires)}
           </p>
 
-
-          <p>
-            <strong>Impact:</strong>
-            ${escapeHTML(impact)}
-          </p>
-
-
           <p>
             <strong>Details:</strong><br>
-            ${escapeHTML(alertText)}
+            ${escapeHTML(text)}
           </p>
-
 
           <p>
             <strong>Source:</strong>
@@ -586,170 +454,17 @@ function createAlertCard(feature, index) {
 }
 
 
-// ============================================================
-// SEVERITY
-// ============================================================
-
-function severityScore(properties) {
-
-  const type =
-    String(
-      properties.alert_type || ""
-    ).toLowerCase();
-
-
-  const name =
-    String(
-      properties.alert_name_en || ""
-    ).toLowerCase();
-
-
-  const risk =
-    String(
-      properties.risk_colour_en || ""
-    ).toLowerCase();
-
-
-  if (
-    type.includes("warning") ||
-    name.includes("warning")
-  ) {
-    return 4;
-  }
-
-
-  if (
-    type.includes("watch") ||
-    name.includes("watch")
-  ) {
-    return 3;
-  }
-
-
-  if (
-    risk.includes("orange")
-  ) {
-    return 3;
-  }
-
-
-  if (
-    risk.includes("yellow")
-  ) {
-    return 2;
-  }
-
-
-  if (
-    type.includes("advisory") ||
-    type.includes("statement") ||
-    name.includes("statement")
-  ) {
-    return 1;
-  }
-
-
-  return 0;
-}
-
-
-// ============================================================
-// CARD TYPE
-// ============================================================
-
-function getCardClass(properties) {
-
-  const type =
-    String(
-      properties.alert_type || ""
-    ).toLowerCase();
-
-
-  const name =
-    String(
-      properties.alert_name_en || ""
-    ).toLowerCase();
-
-
-  if (
-    type.includes("warning") ||
-    name.includes("warning")
-  ) {
-    return "warning-alert";
-  }
-
-
-  if (
-    type.includes("watch") ||
-    name.includes("watch")
-  ) {
-    return "watch-alert";
-  }
-
-
-  if (
-    type.includes("advisory") ||
-    name.includes("advisory")
-  ) {
-    return "advisory-alert";
-  }
-
-
-  return "statement-alert";
-}
-
-
-// ============================================================
-// STATUS
-// ============================================================
-
-function updateStatus(count) {
-
-  const statusElement =
-    document.querySelector(".status");
-
-
-  if (!statusElement) {
-    return;
-  }
-
-
-  if (count === 0) {
-
-    statusElement.textContent =
-      "● No active weather alerts";
-
-    statusElement.style.color =
-      "#2e7d32";
-
-    return;
-  }
-
-
-  statusElement.textContent =
-    `● ${count} active weather alert${
-      count === 1 ? "" : "s"
-    }`;
-
-  statusElement.style.color =
-    "#b3261e";
-}
-
-
-// ============================================================
-// DATE
-// ============================================================
+// ======================================================
+// DATE FORMAT
+// ======================================================
 
 function formatDate(value) {
-
   if (!value) {
     return "Not provided";
   }
 
-
   const date =
     new Date(value);
-
 
   if (
     Number.isNaN(
@@ -758,7 +473,6 @@ function formatDate(value) {
   ) {
     return value;
   }
-
 
   return date.toLocaleString(
     "en-CA",
@@ -770,15 +484,12 @@ function formatDate(value) {
 }
 
 
-// ============================================================
-// SECURITY
-// ============================================================
+// ======================================================
+// HTML SAFETY
+// ======================================================
 
 function escapeHTML(value) {
-
-  return String(
-    value ?? ""
-  )
+  return String(value ?? "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
@@ -787,19 +498,19 @@ function escapeHTML(value) {
 }
 
 
-// ============================================================
-// START
-// ============================================================
+// ======================================================
+// START EVERYTHING
+// ======================================================
 
 document.addEventListener(
   "DOMContentLoaded",
-  () => {
+  function () {
 
-    initializeMap();
+    startMap();
 
     loadAlerts();
 
-    // Refresh every 5 minutes.
+    // Refresh every 5 minutes
     setInterval(
       loadAlerts,
       5 * 60 * 1000
