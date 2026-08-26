@@ -6,42 +6,111 @@
   <title>Canada Severe Weather Alerts</title>
 
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: Arial, sans-serif;
       margin: 0;
-      background: #f2f2f2;
-      color: #111;
+      font-family: Arial, sans-serif;
+      background: #eef2f7;
+      color: #1c1c1c;
     }
 
     header {
-      background: #222;
+      background: linear-gradient(135deg, #0b3d91, #1769aa);
       color: white;
-      padding: 25px;
+      padding: 35px 20px;
       text-align: center;
     }
 
+    header h1 {
+      margin: 0 0 10px;
+      font-size: 36px;
+    }
+
+    header p {
+      margin: 0;
+      font-size: 18px;
+      opacity: 0.9;
+    }
+
     .container {
-      max-width: 900px;
-      margin: 25px auto;
-      padding: 0 20px;
+      width: 90%;
+      max-width: 1000px;
+      margin: 30px auto;
+    }
+
+    .status-bar {
+      background: white;
+      border-radius: 14px;
+      padding: 18px 22px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    }
+
+    .status-bar h2 {
+      margin: 0 0 8px;
+      font-size: 22px;
+    }
+
+    .status {
+      margin: 0;
+      color: #2f7d32;
+      font-weight: bold;
+    }
+
+    .alerts {
+      display: grid;
+      gap: 20px;
     }
 
     .alert-card {
       background: white;
-      border-radius: 10px;
-      padding: 20px;
-      margin-bottom: 15px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+      border-radius: 14px;
+      padding: 22px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+      border-left: 6px solid #888;
     }
 
-    .no-alerts {
+    .alert-card h3 {
+      margin-top: 0;
+      font-size: 24px;
+    }
+
+    .alert-card p {
+      line-height: 1.6;
+    }
+
+    .no-alert {
+      border-left-color: #2f7d32;
       text-align: center;
-      font-size: 18px;
-      padding: 30px;
     }
 
-    a {
-      color: #0066cc;
+    .updates-card {
+      margin-top: 20px;
+    }
+
+    .updates-button {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 12px 18px;
+      background: #0b3d91;
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: bold;
+    }
+
+    .updates-button:hover {
+      background: #082d6b;
+    }
+
+    footer {
+      text-align: center;
+      padding: 25px;
+      color: #666;
+      font-size: 14px;
     }
   </style>
 </head>
@@ -50,22 +119,43 @@
 
   <header>
     <h1>Canada Severe Weather Alerts</h1>
-    <p>Live Canadian severe weather alerts</p>
+    <p>Live Canadian severe weather information</p>
   </header>
 
-  <div class="container">
+  <main class="container">
 
-    <div class="alert-card no-alerts">
-      No severe weather alerts are currently displayed.
-    </div>
+    <section class="status-bar">
+      <h2>Alert Status</h2>
+      <p class="status">● No severe weather alerts currently displayed</p>
+    </section>
 
-    <div class="alert-card">
-      <h2>Weather Updates</h2>
-      <p>Check the latest weather updates here.</p>
-      <a href="updates.md">View Latest Updates</a>
-    </div>
+    <section class="alerts">
 
-  </div>
+      <div class="alert-card no-alert">
+        <h3>No Active Alerts</h3>
+        <p>
+          There are currently no severe weather alerts displayed for your selected area.
+        </p>
+      </div>
+
+      <div class="alert-card updates-card">
+        <h3>Weather Updates</h3>
+        <p>
+          Check the latest weather updates and information.
+        </p>
+
+        <a class="updates-button" href="updates.md">
+          View Latest Updates
+        </a>
+      </div>
+
+    </section>
+
+  </main>
+
+  <footer>
+    Canada Severe Weather Alerts
+  </footer>
 
 </body>
 </html>
