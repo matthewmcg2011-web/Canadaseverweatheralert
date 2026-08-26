@@ -1,18 +1,34 @@
-console.log("ECCC ALERTS JS LOADED");
+// ============================================================
+// CANADA SEVERE WEATHER ALERTS
+// Environment and Climate Change Canada (ECCC)
+// ============================================================
 
-var ECCC_ALERTS_API =
-    "https://api.weather.gc.ca/collections/weather-alerts/items?limit=100";
+console.log("ECCC alerts.js loaded");
+
+
+// ============================================================
+// ECCC API
+// ============================================================
+
+var ECCC_BASE_URL =
+    "https://api.weather.gc.ca/collections/weather-alerts/items";
+
+
+// ============================================================
+// MAP
+// ============================================================
 
 var map = null;
 
 var warningLayer = null;
 var watchLayer = null;
+var statementLayer = null;
 var advisoryLayer = null;
 var otherLayer = null;
 
 
 // ============================================================
-// MAP
+// INITIALIZE MAP
 // ============================================================
 
 function initMap() {
@@ -21,7 +37,7 @@ function initMap() {
         document.getElementById("map");
 
     if (!mapElement) {
-        console.error("Map element #map not found.");
+        console.error("Map element #map was not found.");
         return;
     }
 
@@ -35,10 +51,12 @@ function initMap() {
         4
     );
 
+
     L.tileLayer(
         "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
         {
             maxZoom: 19,
+
             attribution:
                 "&copy; OpenStreetMap contributors"
         }
@@ -51,6 +69,9 @@ function initMap() {
     watchLayer =
         L.layerGroup().addTo(map);
 
+    statementLayer =
+        L.layerGroup().addTo(map);
+
     advisoryLayer =
         L.layerGroup().addTo(map);
 
@@ -61,9 +82,12 @@ function initMap() {
     createMapControls();
 
 
-    setTimeout(function () {
-        map.invalidateSize();
-    }, 500);
+    setTimeout(
+        function () {
+            map.invalidateSize();
+        },
+        500
+    );
 }
 
 
@@ -79,141 +103,216 @@ function createMapControls() {
         });
 
 
-    control.onAdd = function () {
+    control.onAdd =
+        function () {
 
-        var div =
-            L.DomUtil.create(
-                "div",
-                "alert-controls"
+            var div =
+                L.DomUtil.create(
+                    "div",
+                    "alert-controls"
+                );
+
+
+            div.style.background =
+                "#ffffff";
+
+            div.style.padding =
+                "12px";
+
+            div.style.borderRadius =
+                "8px";
+
+            div.style.boxShadow =
+                "0 2px 8px rgba(0,0,0,0.25)";
+
+            div.style.fontFamily =
+                "Arial, sans-serif";
+
+            div.style.fontSize =
+                "14px";
+
+
+            div.innerHTML = `
+                <strong
+                    style="
+                        display:block;
+                        margin-bottom:10px;
+                    "
+                >
+                    Alert Types
+                </strong>
+
+
+                <label
+                    style="
+                        display:block;
+                        margin-bottom:8px;
+                        cursor:pointer;
+                    "
+                >
+
+                    <input
+                        id="toggle-warning"
+                        type="checkbox"
+                        checked
+                    >
+
+                    <span
+                        style="
+                            color:#d32f2f;
+                            font-weight:bold;
+                        "
+                    >
+                        Warnings
+                    </span>
+
+                </label>
+
+
+                <label
+                    style="
+                        display:block;
+                        margin-bottom:8px;
+                        cursor:pointer;
+                    "
+                >
+
+                    <input
+                        id="toggle-watch"
+                        type="checkbox"
+                        checked
+                    >
+
+                    <span
+                        style="
+                            color:#ef6c00;
+                            font-weight:bold;
+                        "
+                    >
+                        Watches
+                    </span>
+
+                </label>
+
+
+                <label
+                    style="
+                        display:block;
+                        margin-bottom:8px;
+                        cursor:pointer;
+                    "
+                >
+
+                    <input
+                        id="toggle-statement"
+                        type="checkbox"
+                        checked
+                    >
+
+                    <span
+                        style="
+                            color:#1976d2;
+                            font-weight:bold;
+                        "
+                    >
+                        Statements
+                    </span>
+
+                </label>
+
+
+                <label
+                    style="
+                        display:block;
+                        margin-bottom:8px;
+                        cursor:pointer;
+                    "
+                >
+
+                    <input
+                        id="toggle-advisory"
+                        type="checkbox"
+                        checked
+                    >
+
+                    <span
+                        style="
+                            color:#0288d1;
+                            font-weight:bold;
+                        "
+                    >
+                        Advisories
+                    </span>
+
+                </label>
+
+
+                <label
+                    style="
+                        display:block;
+                        cursor:pointer;
+                    "
+                >
+
+                    <input
+                        id="toggle-other"
+                        type="checkbox"
+                        checked
+                    >
+
+                    Other
+
+                </label>
+            `;
+
+
+            L.DomEvent.disableClickPropagation(
+                div
+            );
+
+            L.DomEvent.disableScrollPropagation(
+                div
             );
 
 
-        div.style.background =
-            "white";
-
-        div.style.padding =
-            "12px";
-
-        div.style.borderRadius =
-            "8px";
-
-        div.style.boxShadow =
-            "0 2px 8px rgba(0,0,0,.25)";
-
-        div.style.fontFamily =
-            "Arial, sans-serif";
-
-
-        div.innerHTML = `
-            <strong style="
-                display:block;
-                margin-bottom:10px;
-            ">
-                Alert Types
-            </strong>
-
-            <label style="
-                display:block;
-                margin-bottom:7px;
-                cursor:pointer;
-            ">
-                <input
-                    id="toggle-warning"
-                    type="checkbox"
-                    checked
-                >
-                <span style="
-                    color:#d32f2f;
-                    font-weight:bold;
-                ">
-                    Warnings
-                </span>
-            </label>
-
-            <label style="
-                display:block;
-                margin-bottom:7px;
-                cursor:pointer;
-            ">
-                <input
-                    id="toggle-watch"
-                    type="checkbox"
-                    checked
-                >
-                <span style="
-                    color:#ef6c00;
-                    font-weight:bold;
-                ">
-                    Watches
-                </span>
-            </label>
-
-            <label style="
-                display:block;
-                margin-bottom:7px;
-                cursor:pointer;
-            ">
-                <input
-                    id="toggle-advisory"
-                    type="checkbox"
-                    checked
-                >
-                <span style="
-                    color:#0288d1;
-                    font-weight:bold;
-                ">
-                    Advisories
-                </span>
-            </label>
-
-            <label style="
-                display:block;
-                cursor:pointer;
-            ">
-                <input
-                    id="toggle-other"
-                    type="checkbox"
-                    checked
-                >
-                Other
-            </label>
-        `;
-
-
-        L.DomEvent.disableClickPropagation(div);
-        L.DomEvent.disableScrollPropagation(div);
-
-
-        return div;
-    };
+            return div;
+        };
 
 
     control.addTo(map);
 
 
-    setTimeout(function () {
+    setTimeout(
+        function () {
 
-        setupToggle(
-            "toggle-warning",
-            warningLayer
-        );
+            setupToggle(
+                "toggle-warning",
+                warningLayer
+            );
 
-        setupToggle(
-            "toggle-watch",
-            watchLayer
-        );
+            setupToggle(
+                "toggle-watch",
+                watchLayer
+            );
 
-        setupToggle(
-            "toggle-advisory",
-            advisoryLayer
-        );
+            setupToggle(
+                "toggle-statement",
+                statementLayer
+            );
 
-        setupToggle(
-            "toggle-other",
-            otherLayer
-        );
+            setupToggle(
+                "toggle-advisory",
+                advisoryLayer
+            );
 
-    }, 200);
+            setupToggle(
+                "toggle-other",
+                otherLayer
+            );
+
+        },
+        200
+    );
 }
 
 
@@ -231,6 +330,7 @@ function setupToggle(
             checkboxId
         );
 
+
     if (!checkbox) {
         return;
     }
@@ -242,11 +342,15 @@ function setupToggle(
 
             if (this.checked) {
 
-                map.addLayer(layer);
+                map.addLayer(
+                    layer
+                );
 
             } else {
 
-                map.removeLayer(layer);
+                map.removeLayer(
+                    layer
+                );
             }
         }
     );
@@ -254,7 +358,104 @@ function setupToggle(
 
 
 // ============================================================
-// LOAD ALERTS
+// FETCH ONE ALERT TYPE
+// ============================================================
+
+function fetchAlertType(
+    alertType
+) {
+
+    var url =
+        ECCC_BASE_URL +
+        "?filter=" +
+        encodeURIComponent(
+            "properties.alert_type='" +
+            alertType +
+            "'"
+        ) +
+        "&limit=500";
+
+
+    console.log(
+        "REQUESTING ECCC:",
+        alertType,
+        url
+    );
+
+
+    return fetch(
+        url,
+        {
+            method: "GET",
+            cache: "no-store",
+            headers: {
+                "Accept":
+                    "application/geo+json, application/json"
+            }
+        }
+    )
+    .then(
+        function (response) {
+
+            console.log(
+                "ECCC",
+                alertType,
+                "STATUS:",
+                response.status
+            );
+
+
+            if (!response.ok) {
+
+                return response.text()
+                    .then(
+                        function (body) {
+
+                            throw new Error(
+                                alertType +
+                                " request failed: HTTP " +
+                                response.status +
+                                " | " +
+                                body.substring(
+                                    0,
+                                    300
+                                )
+                            );
+                        }
+                    );
+            }
+
+
+            return response.json();
+        }
+    )
+    .then(
+        function (data) {
+
+            var features =
+                Array.isArray(
+                    data.features
+                )
+                    ? data.features
+                    : [];
+
+
+            console.log(
+                "ECCC",
+                alertType,
+                "ALERTS:",
+                features.length
+            );
+
+
+            return features;
+        }
+    );
+}
+
+
+// ============================================================
+// LOAD ALL ALERT TYPES
 // ============================================================
 
 function loadAlerts() {
@@ -266,168 +467,270 @@ function loadAlerts() {
 
 
     console.log(
-        "REQUESTING ECCC:",
-        ECCC_ALERTS_API
+        "Loading ALL ECCC alert types..."
     );
 
 
-    fetch(
-        ECCC_ALERTS_API,
-        {
-            method: "GET",
-            cache: "no-store",
-            headers: {
-                "Accept":
-                    "application/geo+json, application/json"
-            }
-        }
-    )
-    .then(function (response) {
+    Promise.all(
+        [
+            fetchAlertType(
+                "warning"
+            ),
 
-        console.log(
-            "ECCC STATUS:",
-            response.status,
-            response.statusText
-        );
+            fetchAlertType(
+                "watch"
+            ),
 
+            fetchAlertType(
+                "statement"
+            ),
 
-        if (!response.ok) {
-
-            return response.text()
-                .then(function (body) {
-
-                    throw new Error(
-                        "ECCC HTTP " +
-                        response.status +
-                        " " +
-                        response.statusText +
-                        " | " +
-                        body.substring(
-                            0,
-                            500
-                        )
-                    );
-                });
-        }
-
-
-        return response.json();
-    })
-    .then(function (data) {
-
-        console.log(
-            "ECCC RESPONSE:",
-            data
-        );
-
-
-        if (
-            !data ||
-            !Array.isArray(
-                data.features
+            fetchAlertType(
+                "advisory"
             )
-        ) {
+        ]
+    )
+    .then(
+        function (results) {
 
-            throw new Error(
-                "ECCC returned invalid GeoJSON."
+            var allFeatures = [];
+
+
+            for (
+                var i = 0;
+                i < results.length;
+                i++
+            ) {
+
+                allFeatures =
+                    allFeatures.concat(
+                        results[i]
+                    );
+            }
+
+
+            console.log(
+                "TOTAL ECCC ALERTS:",
+                allFeatures.length
+            );
+
+
+            allFeatures =
+                removeExpiredAlerts(
+                    allFeatures
+                );
+
+
+            allFeatures =
+                removeDuplicates(
+                    allFeatures
+                );
+
+
+            console.log(
+                "ACTIVE UNIQUE ALERTS:",
+                allFeatures.length
+            );
+
+
+            displayAlerts(
+                allFeatures,
+                container
+            );
+
+
+            plotAlertsOnMap(
+                allFeatures
+            );
+
+
+            updateStatus(
+                allFeatures.length
             );
         }
+    )
+    .catch(
+        function (error) {
+
+            console.error(
+                "ECCC ALERT LOAD FAILED:",
+                error
+            );
 
 
-        var features =
-            data.features;
+            if (container) {
 
+                container.innerHTML = `
+                    <div
+                        style="
+                            padding:20px;
+                            background:#ffebee;
+                            border:1px solid #ffcdd2;
+                            border-radius:8px;
+                        "
+                    >
 
-        console.log(
-            "ALERT COUNT:",
-            features.length
-        );
+                        <h3
+                            style="
+                                margin:0 0 8px 0;
+                                color:#c62828;
+                            "
+                        >
+                            Unable to Load Alerts
+                        </h3>
 
+                        <p
+                            style="
+                                margin:0 0 10px 0;
+                                color:#b71c1c;
+                            "
+                        >
+                            The ECCC alert service
+                            returned an error.
+                        </p>
 
-        displayAlerts(
-            features,
-            container
-        );
+                        <pre
+                            style="
+                                white-space:pre-wrap;
+                                word-break:break-word;
+                                font-size:12px;
+                                background:#ffffff;
+                                padding:10px;
+                                border-radius:6px;
+                            "
+                        >${escapeHtml(
+                            error.message
+                        )}</pre>
 
+                        <button
+                            onclick="loadAlerts()"
+                            style="
+                                padding:9px 16px;
+                                background:#d32f2f;
+                                color:white;
+                                border:none;
+                                border-radius:6px;
+                                cursor:pointer;
+                                font-weight:bold;
+                            "
+                        >
+                            Try Again
+                        </button>
 
-        plotAlertsOnMap(
-            features
-        );
-
-
-        updateStatus(
-            features.length
-        );
-
-    })
-    .catch(function (error) {
-
-        console.error(
-            "ECCC ALERT LOAD FAILED:",
-            error
-        );
-
-
-        if (!container) {
-            return;
+                    </div>
+                `;
+            }
         }
+    );
+}
 
 
-        container.innerHTML = `
-            <div style="
-                padding:20px;
-                border:1px solid #ffcdd2;
-                background:#ffebee;
-                border-radius:8px;
-            ">
+// ============================================================
+// REMOVE EXPIRED ALERTS
+// ============================================================
 
-                <h3 style="
-                    margin:0 0 8px 0;
-                    color:#c62828;
-                ">
-                    Unable to Load Alerts
-                </h3>
+function removeExpiredAlerts(
+    features
+) {
 
-                <p style="
-                    margin:0 0 10px 0;
-                    color:#b71c1c;
-                ">
-                    The live ECCC weather service
-                    could not be reached right now.
-                </p>
+    var now =
+        Date.now();
 
-                <pre style="
-                    white-space:pre-wrap;
-                    word-break:break-word;
-                    font-size:12px;
-                    color:#444;
-                    background:#fff;
-                    padding:10px;
-                    border-radius:6px;
-                    overflow:auto;
-                ">${escapeHtml(
-                    error.message ||
-                    String(error)
-                )}</pre>
 
-                <button
-                    onclick="loadAlerts()"
-                    style="
-                        padding:9px 16px;
-                        background:#d32f2f;
-                        color:#fff;
-                        border:0;
-                        border-radius:6px;
-                        cursor:pointer;
-                        font-weight:bold;
-                    "
-                >
-                    Try Again
-                </button>
+    return features.filter(
+        function (feature) {
 
-            </div>
-        `;
-    });
+            var p =
+                feature.properties || {};
+
+
+            var expiry =
+                p.expiration_datetime;
+
+
+            if (!expiry) {
+                return true;
+            }
+
+
+            var expiryTime =
+                new Date(
+                    expiry
+                ).getTime();
+
+
+            if (
+                isNaN(
+                    expiryTime
+                )
+            ) {
+                return true;
+            }
+
+
+            return expiryTime > now;
+        }
+    );
+}
+
+
+// ============================================================
+// REMOVE DUPLICATES
+// ============================================================
+
+function removeDuplicates(
+    features
+) {
+
+    var seen = {};
+
+    var unique = [];
+
+
+    for (
+        var i = 0;
+        i < features.length;
+        i++
+    ) {
+
+        var feature =
+            features[i];
+
+        var p =
+            feature.properties || {};
+
+
+        var key =
+            (
+                p.alert_code ||
+                p.feature_id ||
+                feature.id ||
+                ""
+            ) +
+            "|" +
+            (
+                p.feature_name_en ||
+                ""
+            ) +
+            "|" +
+            (
+                p.alert_type ||
+                ""
+            );
+
+
+        if (!seen[key]) {
+
+            seen[key] = true;
+
+            unique.push(
+                feature
+            );
+        }
+    }
+
+
+    return unique;
 }
 
 
@@ -451,25 +754,31 @@ function displayAlerts(
     ) {
 
         container.innerHTML = `
-            <div style="
-                padding:20px;
-                text-align:center;
-                background:#fff;
-                border:1px solid #ddd;
-                border-radius:8px;
-            ">
+            <div
+                style="
+                    padding:20px;
+                    text-align:center;
+                    background:#ffffff;
+                    border:1px solid #ddd;
+                    border-radius:8px;
+                "
+            >
 
-                <h3 style="
-                    color:#2e7d32;
-                    margin:0 0 8px 0;
-                ">
+                <h3
+                    style="
+                        margin:0 0 8px 0;
+                        color:#2e7d32;
+                    "
+                >
                     No Active Alerts
                 </h3>
 
-                <p style="
-                    margin:0;
-                    color:#555;
-                ">
+                <p
+                    style="
+                        margin:0;
+                        color:#555;
+                    "
+                >
                     There are currently no active
                     public weather alerts from ECCC.
                 </p>
@@ -508,7 +817,7 @@ function displayAlerts(
 
             var text =
                 p.alert_text_en ||
-                "No additional details are available.";
+                "No additional details are available for this alert.";
 
 
             var impact =
@@ -542,59 +851,72 @@ function displayAlerts(
 
 
             var color =
-                getAlertColor(p);
+                getAlertColor(
+                    p
+                );
 
 
             html += `
-                <div style="
-                    border:1px solid #ddd;
-                    border-left:6px solid ${color};
-                    border-radius:8px;
-                    padding:18px;
-                    margin-bottom:16px;
-                    background:#fff;
-                    box-shadow:
-                        0 2px 6px
-                        rgba(0,0,0,.05);
-                ">
+                <div
+                    class="alert-card"
+                    style="
+                        border:1px solid #ddd;
+                        border-left:6px solid ${color};
+                        border-radius:8px;
+                        padding:18px;
+                        margin-bottom:16px;
+                        background:#ffffff;
+                        box-shadow:
+                            0 2px 6px
+                            rgba(0,0,0,.05);
+                    "
+                >
 
-                    <div style="
-                        display:flex;
-                        justify-content:space-between;
-                        align-items:flex-start;
-                        gap:12px;
-                    ">
+                    <div
+                        style="
+                            display:flex;
+                            justify-content:space-between;
+                            align-items:flex-start;
+                            gap:12px;
+                        "
+                    >
 
                         <div>
 
-                            <h3 style="
-                                margin:0;
-                                color:#111;
-                                font-size:1.15rem;
-                            ">
+                            <h3
+                                style="
+                                    margin:0;
+                                    color:#111;
+                                    font-size:1.15rem;
+                                "
+                            >
                                 ${escapeHtml(name)}
                             </h3>
 
-                            <div style="
-                                margin-top:5px;
-                                color:#666;
-                                font-size:.9rem;
-                            ">
+                            <div
+                                style="
+                                    margin-top:5px;
+                                    color:#666;
+                                    font-size:.9rem;
+                                "
+                            >
                                 ${escapeHtml(area)}
                             </div>
 
                         </div>
 
 
-                        <span style="
-                            background:${color};
-                            color:#fff;
-                            padding:5px 8px;
-                            border-radius:5px;
-                            font-size:.72rem;
-                            font-weight:bold;
-                            white-space:nowrap;
-                        ">
+                        <span
+                            style="
+                                background:${color};
+                                color:#ffffff;
+                                padding:5px 9px;
+                                border-radius:5px;
+                                font-size:.72rem;
+                                font-weight:bold;
+                                white-space:nowrap;
+                            "
+                        >
                             ${escapeHtml(type)}
                         </span>
 
@@ -604,11 +926,13 @@ function displayAlerts(
                     ${
                         province
                             ? `
-                                <div style="
-                                    margin-top:8px;
-                                    font-size:.85rem;
-                                    color:#666;
-                                ">
+                                <div
+                                    style="
+                                        margin-top:7px;
+                                        color:#666;
+                                        font-size:.85rem;
+                                    "
+                                >
                                     <strong>
                                         Province:
                                     </strong>
@@ -619,12 +943,14 @@ function displayAlerts(
                     }
 
 
-                    <div style="
-                        margin-top:14px;
-                        color:#333;
-                        line-height:1.6;
-                        white-space:pre-line;
-                    ">
+                    <div
+                        style="
+                            margin-top:14px;
+                            color:#333;
+                            line-height:1.6;
+                            white-space:pre-line;
+                        "
+                    >
                         ${escapeHtml(text)}
                     </div>
 
@@ -632,11 +958,13 @@ function displayAlerts(
                     ${
                         impact
                             ? `
-                                <div style="
-                                    margin-top:12px;
-                                    color:#555;
-                                    font-size:.9rem;
-                                ">
+                                <div
+                                    style="
+                                        margin-top:12px;
+                                        color:#555;
+                                        font-size:.9rem;
+                                    "
+                                >
                                     <strong>
                                         Impact:
                                     </strong>
@@ -647,14 +975,16 @@ function displayAlerts(
                     }
 
 
-                    <div style="
-                        margin-top:12px;
-                        padding-top:10px;
-                        border-top:1px solid #eee;
-                        color:#666;
-                        font-size:.82rem;
-                        line-height:1.6;
-                    ">
+                    <div
+                        style="
+                            margin-top:12px;
+                            padding-top:10px;
+                            border-top:1px solid #eee;
+                            color:#666;
+                            font-size:.82rem;
+                            line-height:1.6;
+                        "
+                    >
 
                         ${
                             risk
@@ -725,7 +1055,7 @@ function displayAlerts(
 
 
 // ============================================================
-// MAP ALERTS
+// PLOT ALERTS ON MAP
 // ============================================================
 
 function plotAlertsOnMap(
@@ -739,6 +1069,7 @@ function plotAlertsOnMap(
 
     warningLayer.clearLayers();
     watchLayer.clearLayers();
+    statementLayer.clearLayers();
     advisoryLayer.clearLayers();
     otherLayer.clearLayers();
 
@@ -757,19 +1088,19 @@ function plotAlertsOnMap(
             }
 
 
-            var props =
+            var p =
                 feature.properties || {};
 
 
             var category =
                 getAlertCategory(
-                    props
+                    p
                 );
 
 
             var color =
                 getAlertColor(
-                    props
+                    p
                 );
 
 
@@ -783,14 +1114,18 @@ function plotAlertsOnMap(
                                 return {
                                     color:
                                         color,
+
                                     weight:
                                         2,
+
                                     opacity:
                                         0.9,
+
                                     fillColor:
                                         color,
+
                                     fillOpacity:
-                                        0.3
+                                        0.30
                                 };
                             },
 
@@ -798,48 +1133,58 @@ function plotAlertsOnMap(
                         onEachFeature:
                             function (
                                 feature,
-                                featureLayer
+                                alertLayer
                             ) {
 
-                                var p =
+                                var props =
                                     feature.properties ||
                                     {};
 
 
                                 var title =
-                                    p.alert_name_en ||
+                                    props.alert_name_en ||
                                     "Weather Alert";
 
 
-                                var area =
-                                    p.feature_name_en ||
+                                var type =
+                                    props.alert_type ||
                                     "";
 
 
-                                var type =
-                                    p.alert_type ||
+                                var area =
+                                    props.feature_name_en ||
                                     "";
 
 
                                 var text =
-                                    p.alert_text_en ||
+                                    props.alert_text_en ||
                                     "";
 
 
-                                featureLayer.bindPopup(
-                                    `
-                                    <div style="
-                                        min-width:240px;
-                                        max-width:320px;
-                                    ">
+                                var expires =
+                                    props.expiration_datetime ||
+                                    "";
 
-                                        <h3 style="
-                                            margin:0 0 8px 0;
-                                        ">
+
+                                alertLayer.bindPopup(
+                                    `
+                                    <div
+                                        style="
+                                            min-width:240px;
+                                            max-width:320px;
+                                        "
+                                    >
+
+                                        <h3
+                                            style="
+                                                margin:0 0 8px 0;
+                                            "
+                                        >
                                             ${escapeHtml(
                                                 title
                                             )}
                                         </h3>
+
 
                                         ${
                                             type
@@ -853,6 +1198,7 @@ function plotAlertsOnMap(
                                                 : ""
                                         }
 
+
                                         ${
                                             area
                                                 ? `
@@ -865,15 +1211,34 @@ function plotAlertsOnMap(
                                                 : ""
                                         }
 
+
+                                        ${
+                                            expires
+                                                ? `
+                                                    <strong>
+                                                        Expires:
+                                                    </strong>
+                                                    ${escapeHtml(
+                                                        formatDate(
+                                                            expires
+                                                        )
+                                                    )}
+                                                  `
+                                                : ""
+                                        }
+
+
                                         ${
                                             text
                                                 ? `
                                                     <hr>
-                                                    <div style="
-                                                        line-height:1.45;
-                                                        max-height:180px;
-                                                        overflow:auto;
-                                                    ">
+                                                    <div
+                                                        style="
+                                                            max-height:180px;
+                                                            overflow:auto;
+                                                            line-height:1.45;
+                                                        "
+                                                    >
                                                         ${escapeHtml(text)}
                                                     </div>
                                                   `
@@ -904,6 +1269,15 @@ function plotAlertsOnMap(
 
                 layer.addTo(
                     watchLayer
+                );
+
+            } else if (
+                category ===
+                "statement"
+            ) {
+
+                layer.addTo(
+                    statementLayer
                 );
 
             } else if (
@@ -942,7 +1316,7 @@ function plotAlertsOnMap(
             } catch (error) {
 
                 console.warn(
-                    "Could not calculate layer bounds.",
+                    "Unable to calculate alert bounds.",
                     error
                 );
             }
@@ -962,7 +1336,9 @@ function plotAlertsOnMap(
                     25,
                     25
                 ],
-                maxZoom:7
+
+                maxZoom:
+                    7
             }
         );
 
@@ -996,7 +1372,8 @@ function getAlertCategory(
         String(
             props.alert_type ||
             ""
-        ).toLowerCase();
+        ).toLowerCase()
+         .trim();
 
 
     if (
@@ -1017,9 +1394,15 @@ function getAlertCategory(
 
     if (
         type ===
-        "advisory" ||
-        type ===
         "statement"
+    ) {
+        return "statement";
+    }
+
+
+    if (
+        type ===
+        "advisory"
     ) {
         return "advisory";
     }
@@ -1056,6 +1439,14 @@ function getAlertColor(
         "watch"
     ) {
         return "#ef6c00";
+    }
+
+
+    if (
+        category ===
+        "statement"
+    ) {
+        return "#1976d2";
     }
 
 
@@ -1119,7 +1510,7 @@ function updateStatus(
 
 
 // ============================================================
-// FORMAT DATE
+// DATE
 // ============================================================
 
 function formatDate(
@@ -1132,7 +1523,9 @@ function formatDate(
 
 
     var date =
-        new Date(value);
+        new Date(
+            value
+        );
 
 
     if (
@@ -1149,6 +1542,7 @@ function formatDate(
         {
             dateStyle:
                 "medium",
+
             timeStyle:
                 "short"
         }
