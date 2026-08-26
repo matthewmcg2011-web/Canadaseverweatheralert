@@ -6,11 +6,11 @@
 
   <title>Canada Severe Weather Alerts</title>
 
-  <!-- Leaflet map -->
+  <!-- Leaflet CSS -->
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-  />
+  >
 
   <style>
     * {
@@ -39,6 +39,7 @@
     header p {
       margin: 0;
       font-size: 17px;
+      opacity: 0.9;
     }
 
     .container {
@@ -64,11 +65,15 @@
       color: #2e7d32;
     }
 
+    /* IMPORTANT: visible Leaflet map area */
     #map {
       width: 100%;
       height: 500px;
+      min-height: 500px;
       border-radius: 12px;
       overflow: hidden;
+      background: #dfe7ef;
+      border: 1px solid #d0d7de;
     }
 
     .alerts-section h2 {
@@ -125,6 +130,10 @@
       font-weight: bold;
     }
 
+    .details-button:hover {
+      background: #082d6b;
+    }
+
     .hidden {
       display: none;
     }
@@ -147,6 +156,10 @@
       border-left-color: #1976d2;
     }
 
+    .statement-alert {
+      border-left-color: #757575;
+    }
+
     footer {
       text-align: center;
       padding: 25px;
@@ -157,6 +170,7 @@
     @media (max-width: 800px) {
       #map {
         height: 400px;
+        min-height: 400px;
       }
 
       header h1 {
@@ -183,15 +197,25 @@
       </p>
 
       <p>
-        Live weather alert information from Environment and Climate Change Canada.
+        Live weather alert information from
+        Environment and Climate Change Canada.
       </p>
     </section>
+
 
     <section class="panel">
       <h2>Live Alert Map</h2>
 
-      <div id="map"></div>
+      <div
+        id="map"
+        style="
+          width: 100%;
+          height: 500px;
+          min-height: 500px;
+        "
+      ></div>
     </section>
+
 
     <section class="alerts-section">
 
@@ -200,16 +224,28 @@
       <div class="alerts">
 
         <div class="alert-card">
+
           <div class="alert-header">
-            <h3>Loading Canadian alerts...</h3>
-            <span class="badge">LIVE</span>
+
+            <div>
+              <h3>Loading Canadian alerts...</h3>
+            </div>
+
+            <span class="badge">
+              LIVE
+            </span>
+
           </div>
 
           <div class="alert-content">
+
             <p>
-              Connecting to Environment and Climate Change Canada...
+              Connecting to Environment and
+              Climate Change Canada...
             </p>
+
           </div>
+
         </div>
 
       </div>
@@ -218,14 +254,19 @@
 
   </main>
 
+
   <footer>
     Canada Severe Weather Alerts
   </footer>
 
-  <!-- Leaflet -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-  <!-- Your live ECCC alert system -->
+  <!-- Leaflet JavaScript -->
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+  </script>
+
+
+  <!-- Live ECCC alert system -->
   <script src="alerts.js"></script>
 
 </body>
