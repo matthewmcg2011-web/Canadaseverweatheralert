@@ -9,7 +9,6 @@ function initMap() {
     var mapElement = document.getElementById('map');
     if (!mapElement) return;
 
-    // Center map over Canada
     map = L.map('map').setView([56.1304, -106.3468], 4);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -20,7 +19,7 @@ function initMap() {
 
 // Fetch Active Alerts from ECCC API
 function loadAlerts() {
-    var container = getAlertsContainer();
+    var container = findAlertsContainer();
 
     fetch(ECCC_ALERTS_API)
         .then(function(response) {
@@ -38,77 +37,107 @@ function loadAlerts() {
             console.error('ECCC alert error:', error);
             if (container) {
                 container.innerHTML = 
-                    '<div class="alert-card error" style="padding: 16px; border: 1px solid #f44336; border-radius: 8px; background: #ffebee;">' +
-                        '<h3 style="margin-top:0; color: #c62828;">Unable to load alerts</h3>' +
-                        '<p>The live ECCC alert service could not be reached right now.</p>' +
-                        '<button onclick="loadAlerts()" style="padding: 8px 16px; background: #1976d2; color: #fff; border: none; border-radius: 4px; cursor: pointer;">Try Again</button>' +
+                    '<div style="padding: 20px; border: 1px solid #ffcdd2; background: #ffebee; border-radius: 8px; margin-top: 10px;">' +
+                        '<h3 style="margin: 0 0 8px 0; color: #c62828;">Unable to Load Alerts</h3>' +
+                        '<p style="margin: 0 0 12px 0; color: #b71c1c;">The live ECCC weather service could not be reached right now.</p>' +
+                        '<button onclick="loadAlerts()" style="padding: 8px 16px; background: #d32f2f; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Try Again</button>' +
                     '</div>';
             }
         });
 }
 
-// Locate the DOM container for text alerts
-function getAlertsContainer() {
-    return document.getElementById('active-alerts') || 
-           document.getElementById('alerts-list') || 
-           document.getElementById('alerts') || 
-           document.querySelector('.alerts-container') ||
-           document.querySelector('.active-alerts') ||
-           document.querySelector('main section:last-child');
+// Automatically locate the text alerts container element in index.html
+function findAlertsContainer() {
+    var container = document.getElementById('active-alerts') || 
+                    document.getElementById('alerts-container') || 
+                    document.getElementById('alerts-list') || 
+                    document.getElementById('alerts') || 
+                    document.querySelector('.alerts-container') || 
+                    document.querySelector('.active-alerts');
+
+    if (container) return container;
+
+    // Search by heading text as fallback
+    var headings = document.querySelectorAll('h1, h2, h3, h4');
+    for (var i = 0; i < headings.length; i++) {
+        if (headings[i].textContent.toLowerCase().includes('active alert')) {
+            var parent = headings[i].parentElement;
+            var nextElem = headings[i].nextElementSibling;
+            return nextElem || parent;
+        }
+    }
+    return null;
 }
 
-// Render detailed text cards into the container
+// Render alert cards
 function displayAlerts(features, container) {
     if (!container) return;
 
     if (!features || features.length === 0) {
         container.innerHTML = 
-            '<div style="padding: 24px; text-align: center; color: #555;">' +
-                '<p><strong>No active weather alerts across Canada at this time.</strong></p>' +
+            '<div style="padding: 20px; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; text-align: center; color: #555; margin-top: 10px;">' +
+                '<h3 style="margin: 0 0 6px 0; color: #2e7d32;">No Active Severe Weather Alerts</h3>' +
+                '<p style="margin: 0; font-size: 0.95rem;">There are currently no active public weather alerts issued by Environment Canada.</p>' +
             '</div>';
         return;
     }
 
-    var html = '';
+    // Deduplicate alerts by headline and area
+    var uniqueAlerts = [];
+    var seenKeys = {};
 
     for (var i = 0; i < features.length; i++) {
         var props = features[i].properties || {};
-
-        // Extract key alert properties with fallback checks
-        var headline = props.headline || props.event || props.title || 'Weather Alert';
-        var eventType = props.event || props.event_en || props.type || 'Alert';
-        var area = props.area_name || props.area || props.location || props.name_en || '';
-        var description = props.description || props.summary || props.text || 'No detailed description available.';
-        var severity = props.severity || props.urgency || 'Notice';
-        var timeIssued = props.issued || props.effective || props.updated || '';
-
-        // Dynamic badge and border color based on warning/watch level
-        var color = '#d32f2f'; // Red for Warnings
-        var lowerCheck = (severity + ' ' + eventType + ' ' + headline).toLowerCase();
-        if (lowerCheck.indexOf('watch') !== -1) color = '#f57c00'; // Orange for Watches
-        if (lowerCheck.indexOf('statement') !== -1 || lowerCheck.indexOf('advisory') !== -1) color = '#1976d2'; // Blue for Statements
-
-        html += '<article style="border: 1px solid #e0e0e0; border-left: 6px solid ' + color + '; border-radius: 8px; padding: 18px; margin-bottom: 16px; background: #ffffff; box-shadow: 0 2px 6px rgba(0,0,0,0.04);">';
+        var key = (props.headline || props.event || '') + '|' + (props.area_name || props.location || '');
         
-        // Header title and event tag
-        html += '<div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px;">';
-        html += '<h3 style="margin: 0; font-size: 1.15rem; color: #111;">' + escapeHtml(headline) + '</h3>';
-        html += '<span style="background: ' + color + '; color: #ffffff; font-size: 0.75rem; font-weight: bold; padding: 4px 8px; border-radius: 4px; white-space: nowrap; text-transform: uppercase;">' + escapeHtml(eventType) + '</span>';
+        if (!seenKeys[key]) {
+            seenKeys[key] = true;
+            uniqueAlerts.push(props);
+        }
+    }
+
+    var html = '';
+    for (var j = 0; j < uniqueAlerts.length; j++) {
+        var alertProps = uniqueAlerts[j];
+
+        var headline = alertProps.headline || alertProps.event || alertProps.title || 'Weather Alert';
+        var eventType = alertProps.event || alertProps.event_en || 'Alert';
+        var area = alertProps.area_name || alertProps.area || alertProps.location || alertProps.name_en || '';
+        var description = alertProps.description || alertProps.summary || alertProps.text || 'No additional details available for this alert.';
+        var severity = alertProps.severity || 'Notice';
+        var timeIssued = alertProps.issued || alertProps.effective || alertProps.updated || '';
+
+        // Color coding by alert type
+        var badgeColor = '#d32f2f'; // Red for Warnings
+        var textCheck = (severity + ' ' + eventType + ' ' + headline).toLowerCase();
+        
+        if (textCheck.indexOf('watch') !== -1) {
+            badgeColor = '#ef6c00'; // Orange for Watches
+        } else if (textCheck.indexOf('statement') !== -1 || textCheck.indexOf('advisory') !== -1) {
+            badgeColor = '#0288d1'; // Blue for Statements
+        }
+
+        html += '<div class="alert-card" style="border: 1px solid #e0e0e0; border-left: 6px solid ' + badgeColor + '; border-radius: 8px; padding: 18px; margin-bottom: 16px; background: #ffffff; box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: left;">';
+        
+        // Title & Event Tag
+        html += '<div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 8px;">';
+        html += '<h3 style="margin: 0; font-size: 1.1rem; color: #111; font-weight: 600;">' + escapeHtml(headline) + '</h3>';
+        html += '<span style="background: ' + badgeColor + '; color: #fff; font-size: 0.72rem; font-weight: bold; padding: 4px 8px; border-radius: 4px; white-space: nowrap; text-transform: uppercase;">' + escapeHtml(eventType) + '</span>';
         html += '</div>';
 
-        // Area & Issued time metadata
+        // Area & Issued Time
         if (area || timeIssued) {
-            html += '<div style="font-size: 0.85rem; color: #666; margin-bottom: 12px;">';
+            html += '<div style="font-size: 0.85rem; color: #666; margin-bottom: 10px;">';
             if (area) html += '<strong>Area:</strong> ' + escapeHtml(area);
-            if (area && timeIssued) html += ' | ';
+            if (area && timeIssued) html += ' &bull; ';
             if (timeIssued) html += '<strong>Issued:</strong> ' + escapeHtml(formatDate(timeIssued));
             html += '</div>';
         }
 
-        // Detailed alert narrative text
-        html += '<div style="font-size: 0.95rem; color: #333; line-height: 1.5; white-space: pre-line;">' + escapeHtml(description) + '</div>';
-
-        html += '</article>';
+        // Full Description Narrative
+        html += '<div style="font-size: 0.92rem; color: #333; line-height: 1.5; white-space: pre-line;">' + escapeHtml(description) + '</div>';
+        
+        html += '</div>';
     }
 
     container.innerHTML = html;
@@ -128,8 +157,8 @@ function plotAlertsOnMap(geoJsonData) {
             var text = (props.severity || props.event || props.headline || '').toLowerCase();
             var color = '#d32f2f';
 
-            if (text.indexOf('watch') !== -1) color = '#f57c00';
-            if (text.indexOf('statement') !== -1 || text.indexOf('advisory') !== -1) color = '#1976d2';
+            if (text.indexOf('watch') !== -1) color = '#ef6c00';
+            if (text.indexOf('statement') !== -1 || text.indexOf('advisory') !== -1) color = '#0288d1';
 
             return {
                 color: color,
@@ -149,7 +178,7 @@ function plotAlertsOnMap(geoJsonData) {
     }).addTo(map);
 }
 
-// Format timestamp
+// Format Timestamp
 function formatDate(dateStr) {
     try {
         var d = new Date(dateStr);
@@ -170,7 +199,7 @@ function escapeHtml(str) {
         .replace(/"/g, '&quot;');
 }
 
-// Initialize on DOM ready
+// Start on DOM Ready
 document.addEventListener('DOMContentLoaded', function() {
     initMap();
     loadAlerts();
